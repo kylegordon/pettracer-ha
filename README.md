@@ -3,6 +3,8 @@
 [![Test](https://github.com/kylegordon/pettracer-ha/workflows/Test/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/test.yml)
 [![HACS Validation](https://github.com/kylegordon/pettracer-ha/workflows/HACS%20Validation/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/hacs.yml)
 
+> **⚠️ DISCLAIMER**: This project is not affiliated with, endorsed by, or in any way officially connected with PetTracer.com or its parent company. This is an independent, unofficial integration created by the community. PetTracer® is a trademark of its respective owner.
+
 A custom Home Assistant integration for [PetTracer](https://www.pettracer.com/) GPS pet collars. Track your pets' locations directly in Home Assistant!
 
 This integration uses the [petTracer-API](https://github.com/AmbientArchitect/petTracer-API) client library to connect to the PetTracer service.
