@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Update manifest version
+        run: |
+          python -c "import json; manifest = json.load(open('custom_components/pettracer/manifest.json')); manifest['version'] = '${{ steps.version.outputs.VERSION }}'; json.dump(manifest, open('custom_components/pettracer/manifest.json', 'w'), indent=2)"
+
+      - name: Create ZIP
+        run: |
+          cd custom_components
+          zip -r ../pettracer.zip pettracer/
+          cd ..
+
+      - name: Upload ZIP to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: pettracer.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
