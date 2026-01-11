@@ -1,7 +1,6 @@
 # PetTracer Home Assistant Integration
 
 [![Test](https://github.com/kylegordon/pettracer-ha/workflows/Test/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/test.yml)
-[![HACS Validation](https://github.com/kylegordon/pettracer-ha/workflows/HACS%20Validation/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/hacs.yml)
 
 > **⚠️ DISCLAIMER**: This project is not affiliated with, endorsed by, or in any way officially connected with PetTracer.com or its parent company. This is an independent, unofficial integration created by the community. PetTracer® is a trademark of its respective owner.
 
