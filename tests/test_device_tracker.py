@@ -2,6 +2,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant.components.device_tracker import SourceType
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
@@ -11,12 +12,15 @@ from custom_components.pettracer.const import DOMAIN
 
 async def test_device_tracker_setup(hass, mock_pettracer_client_init, mock_device):
     """Test device tracker entities are created."""
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    entry.data = {
-        CONF_USERNAME: "test@example.com",
-        CONF_PASSWORD: "test_password",
-    }
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
     
     mock_pettracer_client_init.get_all_devices.return_value = [mock_device]
     
@@ -37,7 +41,7 @@ async def test_device_tracker_setup(hass, mock_pettracer_client_init, mock_devic
         # Setup device tracker platform
         entities = []
         
-        async def mock_add_entities(new_entities, update_before_add):
+        def mock_add_entities(new_entities, update_before_add):
             entities.extend(new_entities)
         
         await tracker_setup(hass, entry, mock_add_entities)
