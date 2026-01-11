@@ -22,6 +22,10 @@ async def test_device_tracker_setup(hass, mock_pettracer_client_init, mock_devic
     )
     entry.add_to_hass(hass)
     
+    # Set the entry state to SETUP_IN_PROGRESS to allow async_config_entry_first_refresh
+    from homeassistant.config_entries import ConfigEntryState
+    entry._async_set_state(hass, ConfigEntryState.SETUP_IN_PROGRESS, None)
+    
     mock_pettracer_client_init.get_all_devices.return_value = [mock_device]
     
     with patch("custom_components.pettracer.PetTracerClient") as mock_client:
