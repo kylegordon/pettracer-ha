@@ -3,8 +3,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pettracer import PetTracerError
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from homeassistant.config_entries import ConfigEntryState
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 
@@ -13,12 +14,18 @@ from custom_components.pettracer.const import DOMAIN
 
 async def test_setup_entry_success(hass, mock_pettracer_client_init, mock_device):
     """Test successful setup of a config entry."""
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    entry.data = {
-        CONF_USERNAME: "test@example.com",
-        CONF_PASSWORD: "test_password",
-    }
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    
+    # Set the entry state to SETUP_IN_PROGRESS to allow async_config_entry_first_refresh
+    entry._async_set_state(hass, ConfigEntryState.SETUP_IN_PROGRESS, None)
     
     mock_pettracer_client_init.get_all_devices.return_value = [mock_device]
     
@@ -29,8 +36,6 @@ async def test_setup_entry_success(hass, mock_pettracer_client_init, mock_device
             "homeassistant.config_entries.ConfigEntries.async_forward_entry_setups"
         ) as mock_forward:
             mock_forward.return_value = True
-            
-            result = await hass.config_entries.async_setup(entry.entry_id)
             
             # Note: The actual setup happens in async_setup_entry which we need to import
             from custom_components.pettracer import async_setup_entry
@@ -44,12 +49,15 @@ async def test_setup_entry_success(hass, mock_pettracer_client_init, mock_device
 
 async def test_setup_entry_auth_failed(hass, mock_pettracer_client_init):
     """Test setup fails with authentication error."""
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    entry.data = {
-        CONF_USERNAME: "test@example.com",
-        CONF_PASSWORD: "wrong_password",
-    }
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "wrong_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
     
     mock_pettracer_client_init.login.side_effect = PetTracerError("Invalid credentials")
     
@@ -64,12 +72,15 @@ async def test_setup_entry_auth_failed(hass, mock_pettracer_client_init):
 
 async def test_setup_entry_not_ready(hass, mock_pettracer_client_init):
     """Test setup fails with unexpected error."""
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    entry.data = {
-        CONF_USERNAME: "test@example.com",
-        CONF_PASSWORD: "test_password",
-    }
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
     
     mock_pettracer_client_init.login.side_effect = Exception("Network error")
     
@@ -84,12 +95,18 @@ async def test_setup_entry_not_ready(hass, mock_pettracer_client_init):
 
 async def test_unload_entry(hass, mock_pettracer_client_init, mock_device):
     """Test unloading a config entry."""
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    entry.data = {
-        CONF_USERNAME: "test@example.com",
-        CONF_PASSWORD: "test_password",
-    }
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    
+    # Set the entry state to SETUP_IN_PROGRESS to allow async_config_entry_first_refresh
+    entry._async_set_state(hass, ConfigEntryState.SETUP_IN_PROGRESS, None)
     
     mock_pettracer_client_init.get_all_devices.return_value = [mock_device]
     
@@ -119,9 +136,22 @@ async def test_coordinator_update_success(hass, mock_pettracer_client_init, mock
     """Test coordinator successfully fetches data."""
     from custom_components.pettracer import PetTracerDataUpdateCoordinator
     
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    
+    # Set the entry state to SETUP_IN_PROGRESS to allow async_config_entry_first_refresh
+    entry._async_set_state(hass, ConfigEntryState.SETUP_IN_PROGRESS, None)
+    
     mock_pettracer_client_init.get_all_devices.return_value = [mock_device]
     
-    coordinator = PetTracerDataUpdateCoordinator(hass, mock_pettracer_client_init)
+    coordinator = PetTracerDataUpdateCoordinator(hass, mock_pettracer_client_init, entry)
     
     await coordinator.async_config_entry_first_refresh()
     
@@ -134,13 +164,26 @@ async def test_coordinator_update_success(hass, mock_pettracer_client_init, mock
 async def test_coordinator_update_failure(hass, mock_pettracer_client_init):
     """Test coordinator handles API errors."""
     from custom_components.pettracer import PetTracerDataUpdateCoordinator
-    from homeassistant.helpers.update_coordinator import UpdateFailed
+    
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    
+    # Set the entry state to SETUP_IN_PROGRESS to allow async_config_entry_first_refresh
+    entry._async_set_state(hass, ConfigEntryState.SETUP_IN_PROGRESS, None)
     
     mock_pettracer_client_init.get_all_devices.side_effect = PetTracerError("API Error")
     
-    coordinator = PetTracerDataUpdateCoordinator(hass, mock_pettracer_client_init)
+    coordinator = PetTracerDataUpdateCoordinator(hass, mock_pettracer_client_init, entry)
     
-    with pytest.raises(UpdateFailed):
+    # async_config_entry_first_refresh converts UpdateFailed to ConfigEntryNotReady during setup
+    with pytest.raises(ConfigEntryNotReady):
         await coordinator.async_config_entry_first_refresh()
 
 
@@ -148,9 +191,22 @@ async def test_coordinator_multiple_devices(hass, mock_pettracer_client_init, mo
     """Test coordinator handles multiple devices."""
     from custom_components.pettracer import PetTracerDataUpdateCoordinator
     
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    
+    # Set the entry state to SETUP_IN_PROGRESS to allow async_config_entry_first_refresh
+    entry._async_set_state(hass, ConfigEntryState.SETUP_IN_PROGRESS, None)
+    
     mock_pettracer_client_init.get_all_devices.return_value = [mock_device, mock_device_no_position]
     
-    coordinator = PetTracerDataUpdateCoordinator(hass, mock_pettracer_client_init)
+    coordinator = PetTracerDataUpdateCoordinator(hass, mock_pettracer_client_init, entry)
     
     await coordinator.async_config_entry_first_refresh()
     
@@ -165,9 +221,22 @@ async def test_coordinator_empty_devices(hass, mock_pettracer_client_init):
     """Test coordinator handles no devices."""
     from custom_components.pettracer import PetTracerDataUpdateCoordinator
     
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    
+    # Set the entry state to SETUP_IN_PROGRESS to allow async_config_entry_first_refresh
+    entry._async_set_state(hass, ConfigEntryState.SETUP_IN_PROGRESS, None)
+    
     mock_pettracer_client_init.get_all_devices.return_value = []
     
-    coordinator = PetTracerDataUpdateCoordinator(hass, mock_pettracer_client_init)
+    coordinator = PetTracerDataUpdateCoordinator(hass, mock_pettracer_client_init, entry)
     
     await coordinator.async_config_entry_first_refresh()
     

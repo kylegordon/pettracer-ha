@@ -38,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         raise ConfigEntryNotReady from err
 
     # Create update coordinator
-    coordinator = PetTracerDataUpdateCoordinator(hass, client)
+    coordinator = PetTracerDataUpdateCoordinator(hass, client, entry)
     await coordinator.async_config_entry_first_refresh()
 
     # Store coordinator
@@ -62,7 +62,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching PetTracer data."""
 
-    def __init__(self, hass: HomeAssistant, client: PetTracerClient) -> None:
+    def __init__(
+        self, hass: HomeAssistant, client: PetTracerClient, entry: ConfigEntry
+    ) -> None:
         """Initialize."""
         self.client = client
         super().__init__(
@@ -70,6 +72,7 @@ class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name=DOMAIN,
             update_interval=timedelta(seconds=UPDATE_INTERVAL_SECONDS),
+            config_entry=entry,
         )
 
     async def _async_update_data(self):

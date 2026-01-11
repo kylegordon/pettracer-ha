@@ -103,36 +103,37 @@ async def test_form_unknown_exception(hass, mock_setup_entry):
 
 async def test_form_duplicate_entry(hass, mock_setup_entry):
     """Test we handle duplicate entries."""
-    # Create an existing entry
-    existing_entry = MagicMock()
-    existing_entry.data = {
-        CONF_USERNAME: "test@example.com",
-        CONF_PASSWORD: "test_password",
-    }
-    existing_entry.unique_id = "test@example.com"
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
     
-    with patch(
-        "homeassistant.config_entries.ConfigEntries.async_entries",
-        return_value=[existing_entry],
-    ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": config_entries.SOURCE_USER}
-        )
+    # Create an existing entry using MockConfigEntry which properly handles async methods
+    existing_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        unique_id="test@example.com",
+    )
+    existing_entry.add_to_hass(hass)
+    
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
 
-        with patch(
-            "custom_components.pettracer.config_flow.PetTracerClient"
-        ) as mock_client:
-            client_instance = MagicMock()
-            client_instance.login = MagicMock()
-            mock_client.return_value = client_instance
-            
-            result2 = await hass.config_entries.flow.async_configure(
-                result["flow_id"],
-                {
-                    CONF_USERNAME: "test@example.com",
-                    CONF_PASSWORD: "test_password",
-                },
-            )
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = MagicMock()
+        client_instance.login = MagicMock()
+        mock_client.return_value = client_instance
+        
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                CONF_USERNAME: "test@example.com",
+                CONF_PASSWORD: "test_password",
+            },
+        )
 
     assert result2["type"] == FlowResultType.ABORT
     assert result2["reason"] == "already_configured"
