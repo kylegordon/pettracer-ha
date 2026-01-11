@@ -27,6 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-test.txt
           pip install pettracer-client
+          pip install homeassistant
 
       - name: Run tests with coverage
         run: |

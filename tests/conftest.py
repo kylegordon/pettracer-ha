@@ -8,6 +8,9 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 
 from custom_components.pettracer.const import DOMAIN
 
+# This fixture enables loading custom integrations in pytest tests
+pytest_plugins = "pytest_homeassistant_custom_component"
+
 
 @pytest.fixture
 def mock_setup_entry() -> AsyncMock:
