@@ -1,7 +1,6 @@
 # PetTracer Home Assistant Integration
 
 [![Test](https://github.com/kylegordon/pettracer-ha/workflows/Test/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/test.yml)
-[![HACS Validation](https://github.com/kylegordon/pettracer-ha/workflows/HACS%20Validation/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/hacs.yml)
 
 > **⚠️ DISCLAIMER**: This project is not affiliated with, endorsed by, or in any way officially connected with PetTracer.com or its parent company. This is an independent, unofficial integration created by the community. PetTracer® is a trademark of its respective owner.
 
@@ -28,16 +27,20 @@ This integration uses the [petTracer-API](https://github.com/AmbientArchitect/pe
 
 ### HACS (Recommended)
 
-1. Add this repository as a custom repository in HACS:
+This integration can be installed via HACS as a **custom repository**.
+
+1. **Add this repository as a custom repository in HACS:**
    - Open HACS in Home Assistant
    - Click on "Integrations"
-   - Click the three dots in the top right corner
+   - Click the three dots (⋮) in the top right corner
    - Select "Custom repositories"
-   - Add the repository URL and select "Integration" as the category
+   - In the "Repository" field, enter: `https://github.com/kylegordon/pettracer-ha`
+   - In the "Category" dropdown, select "Integration"
    - Click "Add"
 
-2. Install the integration:
-   - Find "PetTracer GPS Tracker" in HACS
+2. **Install the integration:**
+   - Search for "PetTracer GPS Tracker" in HACS
+   - Click on the integration
    - Click "Download"
    - Restart Home Assistant
 
