@@ -220,7 +220,7 @@ class PetTracerGPSAccuracySensor(PetTracerSensorBase):
         device = self._get_device_data()
         if device and device.lastPos and device.lastPos.acc is not None:
             return device.lastPos.acc
-        return 0
+        return None
 
 
 class PetTracerLastContactSensor(PetTracerSensorBase):

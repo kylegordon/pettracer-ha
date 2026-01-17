@@ -284,7 +284,7 @@ async def test_sensor_no_position(hass, mock_device_no_position):
     assert lon_sensor.native_value is None
     
     acc_sensor = PetTracerGPSAccuracySensor(coordinator, mock_device_no_position)
-    assert acc_sensor.native_value == 0
+    assert acc_sensor.native_value is None
     
     sat_sensor = PetTracerSatellitesSensor(coordinator, mock_device_no_position)
     assert sat_sensor.native_value is None
