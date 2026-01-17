@@ -1,4 +1,5 @@
 """Support for PetTracer device tracking."""
+
 from __future__ import annotations
 
 import logging
@@ -40,7 +41,9 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
         super().__init__(coordinator)
         self._device = device
         self._attr_unique_id = f"pettracer_{device.id}"
-        self._attr_name = device.details.name if device.details else f"PetTracer {device.id}"
+        self._attr_name = (
+            device.details.name if device.details else f"PetTracer {device.id}"
+        )
 
     @property
     def device_info(self) -> dict[str, Any]:
@@ -111,7 +114,7 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional state attributes."""
         attributes = {}
-        
+
         # Get updated device data from coordinator
         for device in self.coordinator.data.get("devices", []):
             if device.id == self._device.id:
@@ -133,5 +136,5 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
                 if device.home is not None:
                     attributes["at_home"] = device.home
                 break
-                
+
         return attributes

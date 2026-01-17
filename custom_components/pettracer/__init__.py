@@ -1,4 +1,5 @@
 """The PetTracer integration."""
+
 from __future__ import annotations
 
 import logging
@@ -16,7 +17,7 @@ from .const import CONF_PASSWORD, CONF_USERNAME, DOMAIN, UPDATE_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER]
+PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER, Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -84,4 +85,6 @@ class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
             )
             return {"devices": devices}
         except PetTracerError as err:
-            raise UpdateFailed(f"Error communicating with PetTracer API: {err}") from err
+            raise UpdateFailed(
+                f"Error communicating with PetTracer API: {err}"
+            ) from err

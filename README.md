@@ -15,6 +15,7 @@ This integration uses the [petTracer-API](https://github.com/AmbientArchitect/pe
 - 🔋 **Battery Monitoring**: See battery level and voltage for each collar
 - 📡 **Signal Quality**: View satellite count and signal strength information
 - 🏠 **Home Detection**: Track whether your pet is at home
+- 📊 **Individual Sensors**: Each attribute is exposed as a separate sensor entity with appropriate device classes
 - 🔄 **Automatic Updates**: Location updates every 60 seconds
 
 ## Requirements
@@ -80,18 +81,60 @@ Each collar appears as a device tracker entity with the pet's name:
 - Shows current GPS location on the map
 - Updates automatically every 60 seconds
 
-### Attributes
+### Sensors
 
-Each device tracker provides additional attributes:
+Each collar provides the following individual sensor entities:
 
-- `battery_voltage_mv`: Battery voltage in millivolts
-- `last_contact`: Last time the collar contacted the server
-- `satellites`: Number of GPS satellites in use
-- `signal_strength`: Signal strength (RSSI)
-- `position_time`: Timestamp of the GPS position
-- `status`: Device status code
-- `mode`: Device operating mode
-- `at_home`: Boolean indicating if pet is at home
+#### Battery Sensors
+- **Battery Level** (`sensor.pet_name_battery_level`)
+  - Device class: Battery
+  - Unit: %
+  - Calculated from battery voltage (3.0V-4.2V range)
+  
+- **Battery Voltage** (`sensor.pet_name_battery_voltage`)
+  - Device class: Voltage
+  - Unit: mV
+  - Raw battery voltage reading
+
+#### Location Sensors
+- **Latitude** (`sensor.pet_name_latitude`)
+  - GPS latitude coordinate
+  
+- **Longitude** (`sensor.pet_name_longitude`)
+  - GPS longitude coordinate
+  
+- **GPS Accuracy** (`sensor.pet_name_gps_accuracy`)
+  - Device class: Distance
+  - Unit: m
+  - GPS position accuracy in meters
+
+#### Communication Sensors
+- **Last Contact** (`sensor.pet_name_last_contact`)
+  - Device class: Timestamp
+  - Last time the collar contacted the server
+  
+- **Position Time** (`sensor.pet_name_position_time`)
+  - Device class: Timestamp
+  - Timestamp when GPS position was measured
+
+#### Signal Sensors
+- **Satellites** (`sensor.pet_name_satellites`)
+  - Number of GPS satellites in use
+  
+- **Signal Strength** (`sensor.pet_name_signal_strength`)
+  - Device class: Signal strength
+  - Unit: dBm
+  - Cellular signal strength (RSSI)
+
+#### Status Sensors
+- **Status** (`sensor.pet_name_status`)
+  - Device status code
+  
+- **Mode** (`sensor.pet_name_mode`)
+  - Device operating mode
+  
+- **At Home** (`sensor.pet_name_at_home`)
+  - Text sensor indicating if pet is at home ("true" or "false")
 
 ### Example Automations
 
@@ -101,9 +144,8 @@ automation:
   - alias: "Pet Left Home"
     trigger:
       - platform: state
-        entity_id: device_tracker.your_pet_name
-        attribute: at_home
-        to: false
+        entity_id: sensor.your_pet_name_at_home
+        to: "false"
     action:
       - service: notify.mobile_app
         data:
@@ -117,14 +159,28 @@ automation:
   - alias: "Pet Collar Low Battery"
     trigger:
       - platform: numeric_state
-        entity_id: device_tracker.your_pet_name
-        attribute: battery_level
+        entity_id: sensor.your_pet_name_battery_level
         below: 20
     action:
       - service: notify.mobile_app
         data:
           title: "Battery Warning"
-          message: "Pet collar battery is low ({{ state_attr('device_tracker.your_pet_name', 'battery_level') }}%)"
+          message: "Pet collar battery is low ({{ states('sensor.your_pet_name_battery_level') }}%)"
+```
+
+**Notify when GPS accuracy is poor:**
+```yaml
+automation:
+  - alias: "Pet Collar Poor GPS"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.your_pet_name_gps_accuracy
+        above: 50
+    action:
+      - service: notify.mobile_app
+        data:
+          title: "GPS Warning"
+          message: "Pet collar has poor GPS accuracy ({{ states('sensor.your_pet_name_gps_accuracy') }}m)"
 ```
 
 ## Troubleshooting
