@@ -1,13 +1,13 @@
 {
   "domain": "pettracer",
   "name": "PetTracer GPS Tracker",
-  "codeowners": ["@kyleg"],
+  "codeowners": ["@kylegordon"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/AmbientArchitect/petTracer-API",
+  "documentation": "https://github.com/kylegordon/petTracer-ha",
   "icon": "mdi:cat",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/AmbientArchitect/petTracer-API/issues",
+  "issue_tracker": "https://github.com/kylegordon/petTracer-ha/issues",
   "requirements": ["pettracer-client>=0.1.0"],
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
