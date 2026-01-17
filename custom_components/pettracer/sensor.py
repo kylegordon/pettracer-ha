@@ -1,4 +1,5 @@
 """Support for PetTracer sensors."""
+
 from __future__ import annotations
 
 import logging
@@ -39,37 +40,37 @@ async def async_setup_entry(
     for device in coordinator.data.get("devices", []):
         # Battery level sensor
         entities.append(PetTracerBatterySensor(coordinator, device))
-        
+
         # Battery voltage sensor
         entities.append(PetTracerBatteryVoltageSensor(coordinator, device))
-        
+
         # Latitude sensor
         entities.append(PetTracerLatitudeSensor(coordinator, device))
-        
+
         # Longitude sensor
         entities.append(PetTracerLongitudeSensor(coordinator, device))
-        
+
         # GPS accuracy sensor
         entities.append(PetTracerGPSAccuracySensor(coordinator, device))
-        
+
         # Last contact sensor
         entities.append(PetTracerLastContactSensor(coordinator, device))
-        
+
         # Satellites sensor
         entities.append(PetTracerSatellitesSensor(coordinator, device))
-        
+
         # Signal strength sensor
         entities.append(PetTracerSignalStrengthSensor(coordinator, device))
-        
+
         # Position time sensor
         entities.append(PetTracerPositionTimeSensor(coordinator, device))
-        
+
         # Status sensor
         entities.append(PetTracerStatusSensor(coordinator, device))
-        
+
         # Mode sensor
         entities.append(PetTracerModeSensor(coordinator, device))
-        
+
         # At home sensor
         entities.append(PetTracerAtHomeSensor(coordinator, device))
 
@@ -84,7 +85,9 @@ class PetTracerSensorBase(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._device = device
         self._device_id = device.id
-        self._device_name = device.details.name if device.details else f"PetTracer {device.id}"
+        self._device_name = (
+            device.details.name if device.details else f"PetTracer {device.id}"
+        )
 
     @property
     def device_info(self) -> dict[str, Any]:

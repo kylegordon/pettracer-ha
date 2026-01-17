@@ -1,4 +1,5 @@
 """The PetTracer integration."""
+
 from __future__ import annotations
 
 import logging
@@ -84,4 +85,6 @@ class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
             )
             return {"devices": devices}
         except PetTracerError as err:
-            raise UpdateFailed(f"Error communicating with PetTracer API: {err}") from err
+            raise UpdateFailed(
+                f"Error communicating with PetTracer API: {err}"
+            ) from err
