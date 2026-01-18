@@ -23,7 +23,17 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util.dt import parse_datetime
 from datetime import datetime
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    MODE_LIVE,
+    MODE_FAST_PLUS,
+    MODE_FAST,
+    MODE_NORMAL_PLUS,
+    MODE_NORMAL,
+    MODE_SLOW_PLUS,
+    MODE_SLOW,
+    VALID_MODES,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -348,8 +358,37 @@ class PetTracerModeSensor(PetTracerSensorBase):
         """Return the state of the sensor."""
         device = self._get_device_data()
         if device and device.mode is not None:
+            # Validate that the mode is one of the expected values
+            if device.mode in VALID_MODES:
+                return device.mode
+            # If mode is not in valid modes, log a warning and return the raw value
+            _LOGGER.warning(
+                "Unknown mode value %s for device %s. Expected one of: %s",
+                device.mode,
+                self._device_id,
+                VALID_MODES,
+            )
             return device.mode
         return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        device = self._get_device_data()
+        if device and device.mode is not None:
+            # Map mode values to friendly names
+            mode_names = {
+                MODE_LIVE: "Live",
+                MODE_FAST_PLUS: "Fast+",
+                MODE_FAST: "Fast",
+                MODE_NORMAL_PLUS: "Normal+",
+                MODE_NORMAL: "Normal",
+                MODE_SLOW_PLUS: "Slow+",
+                MODE_SLOW: "Slow",
+            }
+            mode_name = mode_names.get(device.mode, f"Unknown ({device.mode})")
+            return {"mode_name": mode_name}
+        return {}
 
 
 class PetTracerAtHomeSensor(PetTracerSensorBase):

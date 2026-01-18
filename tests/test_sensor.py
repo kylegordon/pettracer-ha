@@ -245,6 +245,44 @@ async def test_mode_sensor(hass, mock_device):
     assert sensor.unique_id == "pettracer_12345_mode"
     assert sensor.name == "Fluffy Mode"
     assert sensor.native_value == 1
+    assert sensor.extra_state_attributes == {"mode_name": "Fast"}
+
+
+async def test_mode_sensor_all_modes(hass, mock_device):
+    """Test mode sensor with all valid mode values."""
+    from custom_components.pettracer.sensor import PetTracerModeSensor
+    from custom_components.pettracer.const import (
+        MODE_LIVE,
+        MODE_FAST_PLUS,
+        MODE_FAST,
+        MODE_NORMAL_PLUS,
+        MODE_NORMAL,
+        MODE_SLOW_PLUS,
+        MODE_SLOW,
+    )
+
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    sensor = PetTracerModeSensor(coordinator, mock_device)
+
+    # Test all mode mappings
+    test_cases = [
+        (MODE_LIVE, "Live"),
+        (MODE_FAST_PLUS, "Fast+"),
+        (MODE_FAST, "Fast"),
+        (MODE_NORMAL_PLUS, "Normal+"),
+        (MODE_NORMAL, "Normal"),
+        (MODE_SLOW_PLUS, "Slow+"),
+        (MODE_SLOW, "Slow"),
+    ]
+
+    for mode_value, mode_name in test_cases:
+        mock_device.mode = mode_value
+        coordinator.data = {"devices": [mock_device]}
+        
+        assert sensor.native_value == mode_value
+        assert sensor.extra_state_attributes == {"mode_name": mode_name}
 
 
 async def test_at_home_sensor(hass, mock_device):
