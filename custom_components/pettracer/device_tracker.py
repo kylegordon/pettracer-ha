@@ -178,7 +178,7 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
             if device.bat:
                 attributes["battery_voltage_mv"] = device.bat
             if device.lastContact:
-                attributes["last_contact"] = device.lastContact.isoformat()
+                attributes["last_contact"] = device.lastContact
             if device.lastPos:
                 if device.lastPos.sat:
                     attributes["satellites"] = device.lastPos.sat
