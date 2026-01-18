@@ -30,3 +30,14 @@ VALID_MODES = {
     MODE_SLOW_PLUS,
     MODE_SLOW,
 }
+
+# Mode names mapping for display
+MODE_NAMES = {
+    MODE_LIVE: "Live",
+    MODE_FAST_PLUS: "Fast+",
+    MODE_FAST: "Fast",
+    MODE_NORMAL_PLUS: "Normal+",
+    MODE_NORMAL: "Normal",
+    MODE_SLOW_PLUS: "Slow+",
+    MODE_SLOW: "Slow",
+}
