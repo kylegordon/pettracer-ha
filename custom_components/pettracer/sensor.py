@@ -23,7 +23,11 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util.dt import parse_datetime
 from datetime import datetime
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    VALID_MODES,
+    MODE_NAMES,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -348,8 +352,25 @@ class PetTracerModeSensor(PetTracerSensorBase):
         """Return the state of the sensor."""
         device = self._get_device_data()
         if device and device.mode is not None:
+            # Log warning if mode is not in expected values
+            if device.mode not in VALID_MODES:
+                _LOGGER.warning(
+                    "Unknown mode value %s for device %s. Expected one of: %s",
+                    device.mode,
+                    self._device_id,
+                    sorted(VALID_MODES),
+                )
             return device.mode
         return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        device = self._get_device_data()
+        if device and device.mode is not None:
+            mode_name = MODE_NAMES.get(device.mode, f"Unknown ({device.mode})")
+            return {"mode_name": mode_name}
+        return {}
 
 
 class PetTracerAtHomeSensor(PetTracerSensorBase):
