@@ -21,6 +21,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util.dt import parse_datetime
+from datetime import datetime
 
 from .const import DOMAIN
 
@@ -235,11 +236,11 @@ class PetTracerLastContactSensor(PetTracerSensorBase):
         self._attr_icon = "mdi:clock-outline"
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> datetime | None:
         """Return the state of the sensor."""
         device = self._get_device_data()
         if device and device.lastContact:
-            return device.lastContact.isoformat()
+            return device.lastContact
         return None
 
 
@@ -297,15 +298,15 @@ class PetTracerPositionTimeSensor(PetTracerSensorBase):
         self._attr_icon = "mdi:map-clock"
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> datetime | None:
         """Return the state of the sensor."""
         device = self._get_device_data()
         if device and device.lastPos and device.lastPos.timeMeasure:
-            # Try to parse the time string and return as ISO format
+            # Try to parse the time string and return as datetime object
             try:
                 dt = parse_datetime(device.lastPos.timeMeasure)
                 if dt:
-                    return dt.isoformat()
+                    return dt
             except (ValueError, TypeError):
                 pass
             # Return as-is if parsing fails
