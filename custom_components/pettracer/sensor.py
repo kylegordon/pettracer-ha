@@ -25,13 +25,6 @@ from datetime import datetime
 
 from .const import (
     DOMAIN,
-    MODE_LIVE,
-    MODE_FAST_PLUS,
-    MODE_FAST,
-    MODE_NORMAL_PLUS,
-    MODE_NORMAL,
-    MODE_SLOW_PLUS,
-    MODE_SLOW,
     VALID_MODES,
     MODE_NAMES,
 )
