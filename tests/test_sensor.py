@@ -157,6 +157,7 @@ async def test_gps_accuracy_sensor(hass, mock_device):
 
 async def test_last_contact_sensor(hass, mock_device):
     """Test last contact sensor."""
+    from datetime import datetime
     from custom_components.pettracer.sensor import PetTracerLastContactSensor
 
     coordinator = MagicMock()
@@ -167,7 +168,7 @@ async def test_last_contact_sensor(hass, mock_device):
     assert sensor.unique_id == "pettracer_12345_last_contact"
     assert sensor.name == "Fluffy Last Contact"
     assert sensor.device_class == SensorDeviceClass.TIMESTAMP
-    assert sensor.native_value == "2026-01-11T10:30:00"
+    assert sensor.native_value == datetime(2026, 1, 11, 10, 30, 0)
 
 
 async def test_satellites_sensor(hass, mock_device):
