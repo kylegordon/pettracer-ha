@@ -365,7 +365,7 @@ class PetTracerModeSensor(PetTracerSensorBase):
                     "Unknown mode value %s for device %s. Expected one of: %s",
                     device.mode,
                     self._device_id,
-                    VALID_MODES,
+                    sorted(VALID_MODES),
                 )
             return device.mode
         return None

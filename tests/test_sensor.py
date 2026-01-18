@@ -262,7 +262,6 @@ async def test_mode_sensor_all_modes(hass, mock_device):
     )
 
     coordinator = MagicMock()
-    coordinator.data = {"devices": [mock_device]}
 
     sensor = PetTracerModeSensor(coordinator, mock_device)
 
