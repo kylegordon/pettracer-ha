@@ -338,7 +338,23 @@ class PetTracerStatusSensor(PetTracerSensorBase):
 
 
 class PetTracerModeSensor(PetTracerSensorBase):
-    """Representation of a PetTracer mode sensor."""
+    """Representation of a PetTracer mode sensor.
+
+    The mode sensor indicates the device's operating mode, which controls
+    the update frequency and battery consumption:
+
+    Mode Values:
+        1 (Fast): Frequent location updates
+        2 (Normal): Standard update frequency
+        3 (Slow): Infrequent updates to conserve battery
+        7 (Slow+): Very infrequent updates
+        8 (Fast+): Very frequent updates
+        11 (Live): Real-time tracking mode
+        14 (Normal+): Enhanced standard updates
+
+    The sensor provides a 'mode_name' attribute with a human-readable
+    name (e.g., "Live", "Fast+", "Normal").
+    """
 
     def __init__(self, coordinator, device):
         """Initialize the sensor."""
@@ -349,7 +365,11 @@ class PetTracerModeSensor(PetTracerSensorBase):
 
     @property
     def native_value(self) -> int | None:
-        """Return the state of the sensor."""
+        """Return the state of the sensor.
+
+        Returns the numeric mode value (1, 2, 3, 7, 8, 11, or 14).
+        Logs a warning if the mode value is not in the expected set.
+        """
         device = self._get_device_data()
         if device and device.mode is not None:
             # Log warning if mode is not in expected values
@@ -365,7 +385,11 @@ class PetTracerModeSensor(PetTracerSensorBase):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return additional attributes."""
+        """Return additional attributes.
+
+        Provides 'mode_name' attribute with a human-readable name
+        for the current mode (e.g., "Live", "Fast+", "Normal").
+        """
         device = self._get_device_data()
         if device and device.mode is not None:
             mode_name = MODE_NAMES.get(device.mode, f"Unknown ({device.mode})")

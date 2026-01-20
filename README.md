@@ -131,7 +131,16 @@ Each collar provides the following individual sensor entities:
   - Device status code
   
 - **Mode** (`sensor.pet_name_mode`)
-  - Device operating mode
+  - Device operating mode (update frequency setting)
+  - Numeric state values:
+    - `1` - Fast: Frequent updates
+    - `2` - Normal: Standard updates
+    - `3` - Slow: Infrequent updates
+    - `7` - Slow+: Very infrequent updates
+    - `8` - Fast+: Very frequent updates
+    - `11` - Live: Real-time updates
+    - `14` - Normal+: Enhanced standard updates
+  - Includes `mode_name` attribute with friendly name (e.g., "Live", "Fast+", "Normal")
   
 - **At Home** (`sensor.pet_name_at_home`)
   - Text sensor indicating if pet is at home ("true" or "false")
@@ -181,6 +190,21 @@ automation:
         data:
           title: "GPS Warning"
           message: "Pet collar has poor GPS accuracy ({{ states('sensor.your_pet_name_gps_accuracy') }}m)"
+```
+
+**Notify when collar switches to Live mode:**
+```yaml
+automation:
+  - alias: "Pet Collar Live Mode"
+    trigger:
+      - platform: state
+        entity_id: sensor.your_pet_name_mode
+        to: "11"
+    action:
+      - service: notify.mobile_app
+        data:
+          title: "Mode Change"
+          message: "Pet collar switched to Live mode ({{ state_attr('sensor.your_pet_name_mode', 'mode_name') }})"
 ```
 
 ## Troubleshooting
