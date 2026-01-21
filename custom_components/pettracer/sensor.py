@@ -23,7 +23,11 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util.dt import parse_datetime
 from datetime import datetime
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    VALID_MODES,
+    MODE_NAMES,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -334,7 +338,23 @@ class PetTracerStatusSensor(PetTracerSensorBase):
 
 
 class PetTracerModeSensor(PetTracerSensorBase):
-    """Representation of a PetTracer mode sensor."""
+    """Representation of a PetTracer mode sensor.
+
+    The mode sensor indicates the device's operating mode, which controls
+    the update frequency and battery consumption:
+
+    Mode Values:
+        1 (Fast): Frequent location updates
+        2 (Normal): Standard update frequency
+        3 (Slow): Infrequent updates to conserve battery
+        7 (Slow+): Very infrequent updates
+        8 (Fast+): Very frequent updates
+        11 (Live): Real-time tracking mode
+        14 (Normal+): Enhanced standard updates
+
+    The sensor state is the mode name (e.g., "Live", "Fast+", "Normal")
+    and provides a 'mode_number' attribute with the numeric value.
+    """
 
     def __init__(self, coordinator, device):
         """Initialize the sensor."""
@@ -344,12 +364,37 @@ class PetTracerModeSensor(PetTracerSensorBase):
         self._attr_icon = "mdi:cog-outline"
 
     @property
-    def native_value(self) -> int | None:
-        """Return the state of the sensor."""
+    def native_value(self) -> str | None:
+        """Return the state of the sensor.
+
+        Returns the mode name as a string (e.g., "Live", "Fast+", "Normal").
+        Returns "Unrecognized" if the mode value is not in the expected set.
+        """
         device = self._get_device_data()
         if device and device.mode is not None:
-            return device.mode
+            # Return mode name, or "Unrecognized" for unknown modes
+            mode_name = MODE_NAMES.get(device.mode, "Unrecognized")
+            # Log warning if mode is not in expected values
+            if device.mode not in VALID_MODES:
+                _LOGGER.warning(
+                    "Unknown mode value %s for device %s. Expected one of: %s",
+                    device.mode,
+                    self._device_id,
+                    sorted(VALID_MODES),
+                )
+            return mode_name
         return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes.
+
+        Provides 'mode_number' attribute with the numeric mode value.
+        """
+        device = self._get_device_data()
+        if device and device.mode is not None:
+            return {"mode_number": device.mode}
+        return {}
 
 
 class PetTracerAtHomeSensor(PetTracerSensorBase):
