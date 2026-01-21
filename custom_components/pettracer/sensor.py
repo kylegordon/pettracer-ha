@@ -352,8 +352,8 @@ class PetTracerModeSensor(PetTracerSensorBase):
         11 (Live): Real-time tracking mode
         14 (Normal+): Enhanced standard updates
 
-    The sensor provides a 'mode_name' attribute with a human-readable
-    name (e.g., "Live", "Fast+", "Normal").
+    The sensor state is the mode name (e.g., "Live", "Fast+", "Normal")
+    and provides a 'mode_number' attribute with the numeric value.
     """
 
     def __init__(self, coordinator, device):
@@ -364,14 +364,16 @@ class PetTracerModeSensor(PetTracerSensorBase):
         self._attr_icon = "mdi:cog-outline"
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> str | None:
         """Return the state of the sensor.
 
-        Returns the numeric mode value (1, 2, 3, 7, 8, 11, or 14).
-        Logs a warning if the mode value is not in the expected set.
+        Returns the mode name as a string (e.g., "Live", "Fast+", "Normal").
+        Returns "Unrecognized" if the mode value is not in the expected set.
         """
         device = self._get_device_data()
         if device and device.mode is not None:
+            # Return mode name, or "Unrecognized" for unknown modes
+            mode_name = MODE_NAMES.get(device.mode, "Unrecognized")
             # Log warning if mode is not in expected values
             if device.mode not in VALID_MODES:
                 _LOGGER.warning(
@@ -380,20 +382,18 @@ class PetTracerModeSensor(PetTracerSensorBase):
                     self._device_id,
                     sorted(VALID_MODES),
                 )
-            return device.mode
+            return mode_name
         return None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional attributes.
 
-        Provides 'mode_name' attribute with a human-readable name
-        for the current mode (e.g., "Live", "Fast+", "Normal").
+        Provides 'mode_number' attribute with the numeric mode value.
         """
         device = self._get_device_data()
         if device and device.mode is not None:
-            mode_name = MODE_NAMES.get(device.mode, f"Unknown ({device.mode})")
-            return {"mode_name": mode_name}
+            return {"mode_number": device.mode}
         return {}
 
 
