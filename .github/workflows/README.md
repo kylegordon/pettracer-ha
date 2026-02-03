@@ -34,17 +34,30 @@ Runs on:
 - Pull requests to master/main
 - Manual trigger
 
-### `release.yml` - Release Automation
-Automates the release process when a new version is tagged.
+### `release-on-tag.yml` - Tag-Based Release Automation
+Automatically creates releases when a new version tag is pushed.
 
 Runs on:
-- Release publication
+- Push of tags matching `v*.*.*` pattern (e.g., v1.0.0, v1.2.3)
 
 Steps:
-1. Extracts version from git tag
-2. Updates manifest.json with version
+1. Extracts version from tag name
+2. Generates automated release notes including:
+   - PR titles and authors from commits between tags
+   - Full commit history
+   - Installation instructions
 3. Creates ZIP archive of the integration
-4. Uploads ZIP to GitHub release
+4. Creates GitHub release with generated notes and ZIP artifact
+
+### `auto-release.yml` - Legacy Manifest-Based Release
+Legacy workflow that creates releases when manifest.json version changes.
+
+**Note:** With the new tag-based workflow, this can be disabled or removed. Use `release-on-tag.yml` for new releases.
+
+### `release.yml` - Manual Release Support
+Supports manually published releases.
+
+**Note:** With the new tag-based workflow, this is mainly for backward compatibility.
 
 ## Usage
 
@@ -62,7 +75,7 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 **Automatic triggers:**
 - Push to master/main/dev branches → Runs tests
 - Create pull request → Runs tests and HACS validation
-- Publish release → Creates release artifacts
+- Push tag matching v*.*.* → Creates release with automated notes
 
 **Manual triggers:**
 - Go to Actions tab in GitHub
@@ -71,15 +84,28 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 
 ### Creating a Release
 
+**New Tag-Based Process (Recommended):**
+
 1. Update version in `custom_components/pettracer/manifest.json`
-2. Commit and push changes
-3. Create and push a tag:
+2. Commit and push changes to master:
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   git add custom_components/pettracer/manifest.json
+   git commit -m "Bump version to 1.0.4"
+   git push origin master
    ```
-4. Create a release on GitHub
-5. Release workflow automatically creates and uploads ZIP
+3. Create and push a version tag:
+   ```bash
+   git tag v1.0.4
+   git push origin v1.0.4
+   ```
+4. The `release-on-tag.yml` workflow automatically:
+   - Generates release notes from PRs and commits
+   - Creates a ZIP package
+   - Publishes the GitHub release
+
+**Legacy Process (auto-release.yml):**
+- Pushing changes to manifest.json triggers auto-release
+- Can be disabled in favor of tag-based releases
 
 ## Status Badges
 
