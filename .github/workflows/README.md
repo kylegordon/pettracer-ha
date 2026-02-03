@@ -26,14 +26,6 @@ Runs on every push and pull request to master, main, or dev branches.
    - Validates translations
    - Checks HACS compatibility
 
-### `hacs.yml` - HACS Validation
-Validates the integration is compatible with HACS standards.
-
-Runs on:
-- Push to master/main
-- Pull requests to master/main
-- Manual trigger
-
 ### `release-on-tag.yml` - Tag-Based Release Automation
 Automatically creates releases when a new version tag is pushed.
 
@@ -48,16 +40,6 @@ Steps:
    - Installation instructions
 3. Creates ZIP archive of the integration
 4. Creates GitHub release with generated notes and ZIP artifact
-
-### `auto-release.yml` - Legacy Manifest-Based Release
-Legacy workflow that creates releases when manifest.json version changes.
-
-**Note:** With the new tag-based workflow, this can be disabled or removed. Use `release-on-tag.yml` for new releases.
-
-### `release.yml` - Manual Release Support
-Supports manually published releases.
-
-**Note:** With the new tag-based workflow, this is mainly for backward compatibility.
 
 ## Usage
 
@@ -84,8 +66,6 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 
 ### Creating a Release
 
-**New Tag-Based Process (Recommended):**
-
 1. Update version in `custom_components/pettracer/manifest.json`
 2. Commit and push changes to master:
    ```bash
@@ -103,17 +83,12 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
    - Creates a ZIP package
    - Publishes the GitHub release
 
-**Legacy Process (auto-release.yml):**
-- Pushing changes to manifest.json triggers auto-release
-- Can be disabled in favor of tag-based releases
-
 ## Status Badges
 
 Add these to your README.md:
 
 ```markdown
 [![Test](https://github.com/kylegordon/pettracer-ha/workflows/Test/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/test.yml)
-[![HACS Validation](https://github.com/kylegordon/pettracer-ha/workflows/HACS%20Validation/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/hacs.yml)
 ```
 
 ## Coverage
@@ -136,6 +111,6 @@ Coverage reports are uploaded to Codecov on each test run. To view:
 - Verify integration follows HACS guidelines
 
 ### Release Workflow Issues
-- Ensure tag format is `v*.*.*` (e.g., v0.1.0)
+- Ensure tag format is `v*.*.*` (e.g., v1.0.4)
 - Check GITHUB_TOKEN has sufficient permissions
 - Verify manifest.json is valid JSON
