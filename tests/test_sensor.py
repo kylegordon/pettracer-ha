@@ -85,9 +85,10 @@ async def test_battery_sensor(hass, mock_device):
     assert sensor.native_unit_of_measurement == "%"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
 
-    # Test battery conversion (4100mV should be 100%)
+    # Test battery conversion (4100mV should be 83%)
     battery = sensor.native_value
-    assert battery == 100
+    assert battery == 83
+
 
 
 async def test_battery_voltage_sensor(hass, mock_device):
@@ -436,8 +437,8 @@ async def test_battery_percentage_edge_cases(hass, mock_device):
     mock_device.bat = 3600
     assert sensor.native_value == 0
 
-    # Test maximum voltage (4100mV = 100%)
-    mock_device.bat = 4100
+    # Test maximum voltage (4200mV = 100%)
+    mock_device.bat = 4200
     assert sensor.native_value == 100
 
     # Test below minimum (should cap at 0%)
@@ -445,21 +446,21 @@ async def test_battery_percentage_edge_cases(hass, mock_device):
     assert sensor.native_value == 0
 
     # Test above maximum (should cap at 100%)
-    mock_device.bat = 4200
+    mock_device.bat = 4300
     assert sensor.native_value == 100
 
-    # Test mid-range (3850mV = 50%)
-    mock_device.bat = 3850
+    # Test mid-range (3900mV = 50%)
+    mock_device.bat = 3900
     assert sensor.native_value == 50
 
-    # Test 3800mV (should be 40%)
+    # Test 3800mV (should be 33%)
     mock_device.bat = 3800
-    assert sensor.native_value == 40
+    assert sensor.native_value == 33
 
-    # Test 3900mV (should be 60%)
-    mock_device.bat = 3900
-    assert sensor.native_value == 60
-
-    # Test 4000mV (should be 80%)
+    # Test 4000mV (should be 66%)
     mock_device.bat = 4000
-    assert sensor.native_value == 80
+    assert sensor.native_value == 66
+
+    # Test 4100mV (should be 83%)
+    mock_device.bat = 4100
+    assert sensor.native_value == 83

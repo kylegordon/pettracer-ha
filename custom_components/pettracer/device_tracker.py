@@ -158,14 +158,14 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
         if device and device.bat:
             # Convert from millivolts to percentage
             # Based on actual PetTracer device behavior:
-            # 4100mV = 100%, 3600mV = 0%
+            # 4200mV = 100%, 3600mV = 0%
             mv = device.bat
-            if mv >= 4100:
+            if mv >= 4200:
                 return 100
             elif mv <= 3600:
                 return 0
             else:
-                return int(((mv - 3600) / 500) * 100)
+                return int(((mv - 3600) / 600) * 100)
         return None
 
     @property

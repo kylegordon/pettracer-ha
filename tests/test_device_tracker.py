@@ -78,13 +78,13 @@ async def test_device_tracker_battery_conversion(hass, mock_device):
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
     
-    # Test with 4100mV (full battery)
+    # Test with 4100mV (83% battery)
     mock_device.bat = 4100
     tracker = PetTracerDeviceTracker(coordinator, mock_device)
     battery = tracker.battery_level
-    assert battery == 100
+    assert battery == 83
     
-    # Test with above max (4200mV should cap at 100%)
+    # Test with full battery (4200mV = 100%)
     mock_device.bat = 4200
     coordinator.data = {"devices": [mock_device]}
     battery = tracker.battery_level
@@ -101,6 +101,7 @@ async def test_device_tracker_battery_conversion(hass, mock_device):
     coordinator.data = {"devices": [mock_device]}
     battery = tracker.battery_level
     assert battery == 100
+
 
 
 async def test_device_tracker_no_position(hass, mock_device_no_position):
