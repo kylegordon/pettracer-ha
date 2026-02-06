@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import CONF_PASSWORD, CONF_USERNAME, DOMAIN, UPDATE_INTERVAL_SECONDS
@@ -25,8 +26,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     username = entry.data[CONF_USERNAME]
     password = entry.data[CONF_PASSWORD]
 
-    # Create the PetTracer client
-    client = PetTracerClient()
+    # Create the PetTracer client with Home Assistant's aiohttp session
+    session = aiohttp_client.async_get_clientsession(hass)
+    client = PetTracerClient(session=session)
 
     # Authenticate
     try:

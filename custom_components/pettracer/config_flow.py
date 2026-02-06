@@ -11,6 +11,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import aiohttp_client
 
 from .const import DOMAIN
 
@@ -62,5 +63,6 @@ class PetTracerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _test_credentials(self, username: str, password: str) -> None:
         """Validate credentials."""
-        client = PetTracerClient()
+        session = aiohttp_client.async_get_clientsession(self.hass)
+        client = PetTracerClient(session=session)
         await client.login(username, password)
