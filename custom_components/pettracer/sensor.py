@@ -131,16 +131,16 @@ class PetTracerBatterySensor(PetTracerSensorBase):
         """Return the state of the sensor."""
         device = self._get_device_data()
         if device and device.bat:
-            # Convert from millivolts to percentage (rough estimate)
-            # Typical LiPo: 4.2V full, 3.0V empty
-            # 4200mV = 100%, 3000mV = 0%
+            # Convert from millivolts to percentage
+            # Based on actual PetTracer device behavior:
+            # 4200mV = 100%, 3600mV = 0%
             mv = device.bat
             if mv >= 4200:
                 return 100
-            elif mv <= 3000:
+            elif mv <= 3600:
                 return 0
             else:
-                return int(((mv - 3000) / 1200) * 100)
+                return int(((mv - 3600) / 600) * 100)
         return None
 
 

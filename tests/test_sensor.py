@@ -85,10 +85,10 @@ async def test_battery_sensor(hass, mock_device):
     assert sensor.native_unit_of_measurement == "%"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
 
-    # Test battery conversion (4100mV should be around 91%)
+    # Test battery conversion (4100mV should be 83%)
     battery = sensor.native_value
-    assert battery is not None
-    assert 80 <= battery <= 95
+    assert battery == 83
+
 
 
 async def test_battery_voltage_sensor(hass, mock_device):
@@ -422,3 +422,45 @@ async def test_sensor_no_details(hass):
 
     device_info = sensor.device_info
     assert device_info["sw_version"] is None
+
+
+async def test_battery_percentage_edge_cases(hass, mock_device):
+    """Test battery percentage calculation with edge cases."""
+    from custom_components.pettracer.sensor import PetTracerBatterySensor
+
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    sensor = PetTracerBatterySensor(coordinator, mock_device)
+
+    # Test minimum voltage (3600mV = 0%)
+    mock_device.bat = 3600
+    assert sensor.native_value == 0
+
+    # Test maximum voltage (4200mV = 100%)
+    mock_device.bat = 4200
+    assert sensor.native_value == 100
+
+    # Test below minimum (should cap at 0%)
+    mock_device.bat = 3500
+    assert sensor.native_value == 0
+
+    # Test above maximum (should cap at 100%)
+    mock_device.bat = 4300
+    assert sensor.native_value == 100
+
+    # Test mid-range (3900mV = 50%)
+    mock_device.bat = 3900
+    assert sensor.native_value == 50
+
+    # Test 3800mV (should be 33%)
+    mock_device.bat = 3800
+    assert sensor.native_value == 33
+
+    # Test 4000mV (should be 66%)
+    mock_device.bat = 4000
+    assert sensor.native_value == 66
+
+    # Test 4100mV (should be 83%)
+    mock_device.bat = 4100
+    assert sensor.native_value == 83
