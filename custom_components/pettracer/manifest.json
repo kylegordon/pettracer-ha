@@ -7,6 +7,6 @@
   "documentation": "https://github.com/kylegordon/petTracer-ha",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/kylegordon/petTracer-ha/issues",
-  "requirements": ["pettracer-client>=0.1.0"],
+  "requirements": ["pettracer-client==0.1.0"],
   "version": "1.0.3"
 }
