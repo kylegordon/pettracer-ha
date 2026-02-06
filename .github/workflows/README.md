@@ -26,25 +26,20 @@ Runs on every push and pull request to master, main, or dev branches.
    - Validates translations
    - Checks HACS compatibility
 
-### `hacs.yml` - HACS Validation
-Validates the integration is compatible with HACS standards.
+### `release-on-tag.yml` - Tag-Based Release Automation
+Automatically creates releases when a new version tag is pushed.
 
 Runs on:
-- Push to master/main
-- Pull requests to master/main
-- Manual trigger
-
-### `release.yml` - Release Automation
-Automates the release process when a new version is tagged.
-
-Runs on:
-- Release publication
+- Push of tags matching `v*.*.*` pattern (e.g., v1.0.0, v1.2.3)
 
 Steps:
-1. Extracts version from git tag
-2. Updates manifest.json with version
+1. Extracts version from tag name
+2. Generates automated release notes including:
+   - PR titles and authors from commits between tags
+   - Full commit history
+   - Installation instructions
 3. Creates ZIP archive of the integration
-4. Uploads ZIP to GitHub release
+4. Creates GitHub release with generated notes and ZIP artifact
 
 ## Usage
 
@@ -62,7 +57,7 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 **Automatic triggers:**
 - Push to master/main/dev branches → Runs tests
 - Create pull request → Runs tests and HACS validation
-- Publish release → Creates release artifacts
+- Push tag matching v*.*.* → Creates release with automated notes
 
 **Manual triggers:**
 - Go to Actions tab in GitHub
@@ -72,14 +67,21 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 ### Creating a Release
 
 1. Update version in `custom_components/pettracer/manifest.json`
-2. Commit and push changes
-3. Create and push a tag:
+2. Commit and push changes to master:
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   git add custom_components/pettracer/manifest.json
+   git commit -m "Bump version to 1.0.4"
+   git push origin master
    ```
-4. Create a release on GitHub
-5. Release workflow automatically creates and uploads ZIP
+3. Create and push a version tag:
+   ```bash
+   git tag v1.0.4
+   git push origin v1.0.4
+   ```
+4. The `release-on-tag.yml` workflow automatically:
+   - Generates release notes from PRs and commits
+   - Creates a ZIP package
+   - Publishes the GitHub release
 
 ## Status Badges
 
@@ -87,7 +89,6 @@ Add these to your README.md:
 
 ```markdown
 [![Test](https://github.com/kylegordon/pettracer-ha/workflows/Test/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/test.yml)
-[![HACS Validation](https://github.com/kylegordon/pettracer-ha/workflows/HACS%20Validation/badge.svg)](https://github.com/kylegordon/pettracer-ha/actions/workflows/hacs.yml)
 ```
 
 ## Coverage
@@ -110,6 +111,6 @@ Coverage reports are uploaded to Codecov on each test run. To view:
 - Verify integration follows HACS guidelines
 
 ### Release Workflow Issues
-- Ensure tag format is `v*.*.*` (e.g., v0.1.0)
+- Ensure tag format is `v*.*.*` (e.g., v1.0.4)
 - Check GITHUB_TOKEN has sufficient permissions
 - Verify manifest.json is valid JSON

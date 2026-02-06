@@ -1,0 +1,127 @@
+name: Release on Tag Push
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Create Release from Tag
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for release notes
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Creating release for $TAG_NAME (version $VERSION)"
+
+      - name: Create ZIP package
+        run: |
+          cd custom_components
+          zip -r ../pettracer-${{ steps.get_version.outputs.version }}.zip pettracer/ -x "*.pyc" -x "__pycache__/*" -x "*.pyo"
+          cd ..
+          echo "Created pettracer-${{ steps.get_version.outputs.version }}.zip"
+
+      - name: Generate release notes
+        id: release_notes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = '${{ steps.get_version.outputs.tag }}';
+            const version = '${{ steps.get_version.outputs.version }}';
+            
+            // Get the previous tag
+            const { data: tags } = await github.rest.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const currentTagIndex = tags.findIndex(t => t.name === tag);
+            const previousTag = currentTagIndex < tags.length - 1 ? tags[currentTagIndex + 1].name : null;
+            
+            let releaseNotes = `## Changes in version ${version}\n\n`;
+            
+            if (previousTag) {
+              // Get commits between tags
+              const { data: comparison } = await github.rest.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: previousTag,
+                head: tag
+              });
+              
+              // Extract PR numbers from commit messages
+              const prNumbers = new Set();
+              for (const commit of comparison.commits) {
+                const match = commit.commit.message.match(/#(\d+)/g);
+                if (match) {
+                  match.forEach(pr => {
+                    const num = pr.replace('#', '');
+                    prNumbers.add(num);
+                  });
+                }
+              }
+              
+              // Fetch PR details
+              if (prNumbers.size > 0) {
+                releaseNotes += '### Pull Requests\n\n';
+                for (const prNum of Array.from(prNumbers).sort((a, b) => b - a)) {
+                  try {
+                    const { data: pr } = await github.rest.pulls.get({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      pull_number: parseInt(prNum)
+                    });
+                    releaseNotes += `- #${prNum}: ${pr.title} (@${pr.user.login})\n`;
+                  } catch (error) {
+                    console.log(`Could not fetch PR #${prNum}: ${error.message}`);
+                  }
+                }
+                releaseNotes += '\n';
+              }
+              
+              // Add commit summary
+              releaseNotes += '### Commits\n\n';
+              for (const commit of comparison.commits) {
+                const shortSha = commit.sha.substring(0, 7);
+                const message = commit.commit.message.split('\n')[0];
+                releaseNotes += `- ${message} (\`${shortSha}\`)\n`;
+              }
+            } else {
+              releaseNotes += 'Initial release\n';
+            }
+            
+            releaseNotes += `\n---\n\n### Installation\n\n`;
+            releaseNotes += `This release is compatible with HACS. Install via:\n`;
+            releaseNotes += `1. HACS → Integrations → Explore & Download Repositories → Search "PetTracer"\n`;
+            releaseNotes += `2. Or manually download \`pettracer-${version}.zip\` and extract to \`custom_components/\`\n`;
+            
+            return releaseNotes;
+          result-encoding: string
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: Release ${{ steps.get_version.outputs.tag }}
+          body: ${{ steps.release_notes.outputs.result }}
+          files: |
+            pettracer-${{ steps.get_version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
