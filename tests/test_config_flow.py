@@ -1,5 +1,5 @@
 """Tests for the PetTracer config flow."""
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pettracer import PetTracerError
@@ -31,7 +31,7 @@ async def test_form_user_success(hass, mock_setup_entry, mock_pettracer_client):
         "custom_components.pettracer.config_flow.PetTracerClient"
     ) as mock_client:
         client_instance = MagicMock()
-        client_instance.login = MagicMock()
+        client_instance.login = AsyncMock()
         mock_client.return_value = client_instance
         
         result2 = await hass.config_entries.flow.async_configure(
@@ -61,7 +61,7 @@ async def test_form_invalid_auth(hass, mock_setup_entry):
         "custom_components.pettracer.config_flow.PetTracerClient"
     ) as mock_client:
         client_instance = MagicMock()
-        client_instance.login = MagicMock(side_effect=PetTracerError("Invalid credentials"))
+        client_instance.login = AsyncMock(side_effect=PetTracerError("Invalid credentials"))
         mock_client.return_value = client_instance
         
         result2 = await hass.config_entries.flow.async_configure(
@@ -86,7 +86,7 @@ async def test_form_unknown_exception(hass, mock_setup_entry):
         "custom_components.pettracer.config_flow.PetTracerClient"
     ) as mock_client:
         client_instance = MagicMock()
-        client_instance.login = MagicMock(side_effect=Exception("Unexpected error"))
+        client_instance.login = AsyncMock(side_effect=Exception("Unexpected error"))
         mock_client.return_value = client_instance
         
         result2 = await hass.config_entries.flow.async_configure(
@@ -124,7 +124,7 @@ async def test_form_duplicate_entry(hass, mock_setup_entry):
         "custom_components.pettracer.config_flow.PetTracerClient"
     ) as mock_client:
         client_instance = MagicMock()
-        client_instance.login = MagicMock()
+        client_instance.login = AsyncMock()
         mock_client.return_value = client_instance
         
         result2 = await hass.config_entries.flow.async_configure(
@@ -149,7 +149,7 @@ async def test_form_case_insensitive_username(hass, mock_setup_entry):
         "custom_components.pettracer.config_flow.PetTracerClient"
     ) as mock_client:
         client_instance = MagicMock()
-        client_instance.login = MagicMock()
+        client_instance.login = AsyncMock()
         mock_client.return_value = client_instance
         
         result2 = await hass.config_entries.flow.async_configure(
