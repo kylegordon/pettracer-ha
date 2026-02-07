@@ -32,7 +32,7 @@ def mock_pettracer_client():
     """Mock PetTracerClient."""
     with patch("custom_components.pettracer.config_flow.PetTracerClient") as mock_client:
         client_instance = MagicMock()
-        client_instance.login = MagicMock()
+        client_instance.login = AsyncMock()
         client_instance.is_authenticated = True
         client_instance.token = "test-token"
         client_instance.user_name = "Test User"
@@ -45,10 +45,10 @@ def mock_pettracer_client_init():
     """Mock PetTracerClient for __init__.py."""
     with patch("custom_components.pettracer.PetTracerClient") as mock_client:
         client_instance = MagicMock()
-        client_instance.login = MagicMock()
+        client_instance.login = AsyncMock()
         client_instance.is_authenticated = True
         client_instance.token = "test-token"
-        client_instance.get_all_devices = MagicMock()
+        client_instance.get_all_devices = AsyncMock()
         mock_client.return_value = client_instance
         yield client_instance
 

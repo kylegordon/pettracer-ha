@@ -30,7 +30,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Authenticate
     try:
-        await hass.async_add_executor_job(client.login, username, password)
+        await client.login(username, password)
     except PetTracerError as err:
         _LOGGER.error("Failed to authenticate with PetTracer: %s", err)
         raise ConfigEntryAuthFailed from err
@@ -80,9 +80,7 @@ class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from PetTracer API."""
         try:
             # Fetch all devices
-            devices = await self.hass.async_add_executor_job(
-                self.client.get_all_devices
-            )
+            devices = await self.client.get_all_devices()
             return {"devices": devices}
         except PetTracerError as err:
             raise UpdateFailed(

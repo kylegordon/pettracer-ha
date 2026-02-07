@@ -173,7 +173,7 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Return additional state attributes."""
         attributes = {}
         device = self._get_device_data()
-        
+
         if device:
             if device.bat:
                 attributes["battery_voltage_mv"] = device.bat
