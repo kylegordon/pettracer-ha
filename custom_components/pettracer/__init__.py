@@ -37,7 +37,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.error("Failed to authenticate with PetTracer: %s", err)
         raise ConfigEntryAuthFailed from err
     except Exception as err:
-        _LOGGER.error("Unexpected error during PetTracer authentication: %s", err)
+        _LOGGER.error(
+            "Unexpected error during PetTracer authentication: %s", 
+            err,
+            exc_info=True
+        )
         raise ConfigEntryNotReady from err
 
     # Create update coordinator
@@ -85,6 +89,20 @@ class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
             devices = await self.client.get_all_devices()
             return {"devices": devices}
         except PetTracerError as err:
+            _LOGGER.error(
+                "Error communicating with PetTracer API: %s", 
+                err,
+                exc_info=True
+            )
             raise UpdateFailed(
                 f"Error communicating with PetTracer API: {err}"
+            ) from err
+        except Exception as err:
+            _LOGGER.error(
+                "Unexpected error fetching PetTracer data: %s",
+                err,
+                exc_info=True
+            )
+            raise UpdateFailed(
+                f"Unexpected error fetching PetTracer data: {err}"
             ) from err
