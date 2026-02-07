@@ -93,6 +93,31 @@ async def test_setup_entry_not_ready(hass, mock_pettracer_client_init):
             await async_setup_entry(hass, entry)
 
 
+async def test_setup_entry_timeout(hass, mock_pettracer_client_init):
+    """Test setup fails with timeout error."""
+    import asyncio
+    
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    
+    mock_pettracer_client_init.login.side_effect = asyncio.TimeoutError("Connection timed out")
+    
+    with patch("custom_components.pettracer.PetTracerClient") as mock_client:
+        mock_client.return_value = mock_pettracer_client_init
+        
+        from custom_components.pettracer import async_setup_entry
+        
+        with pytest.raises(ConfigEntryNotReady):
+            await async_setup_entry(hass, entry)
+
+
 async def test_unload_entry(hass, mock_pettracer_client_init, mock_device):
     """Test unloading a config entry."""
     entry = MockConfigEntry(

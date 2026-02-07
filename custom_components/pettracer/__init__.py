@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import timedelta
 
@@ -36,6 +37,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except PetTracerError as err:
         _LOGGER.error("Failed to authenticate with PetTracer: %s", err)
         raise ConfigEntryAuthFailed from err
+    except (TimeoutError, asyncio.TimeoutError) as err:
+        _LOGGER.warning(
+            "Timeout connecting to PetTracer API during authentication. "
+            "This may be due to network issues or the API being slow. "
+            "Home Assistant will retry automatically."
+        )
+        raise ConfigEntryNotReady(
+            "Timeout connecting to PetTracer API"
+        ) from err
     except Exception as err:
         _LOGGER.error(
             "Unexpected error during PetTracer authentication: %s", 
@@ -96,6 +106,14 @@ class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
             )
             raise UpdateFailed(
                 f"Error communicating with PetTracer API: {err}"
+            ) from err
+        except (TimeoutError, asyncio.TimeoutError) as err:
+            _LOGGER.warning(
+                "Timeout fetching data from PetTracer API. "
+                "This may be due to network issues or the API being slow."
+            )
+            raise UpdateFailed(
+                "Timeout connecting to PetTracer API"
             ) from err
         except Exception as err:
             _LOGGER.error(
