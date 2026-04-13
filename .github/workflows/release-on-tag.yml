@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate release notes
         id: release_notes
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const tag = '${{ steps.get_version.outputs.tag }}';
