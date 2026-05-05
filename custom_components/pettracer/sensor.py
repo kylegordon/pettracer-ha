@@ -43,6 +43,7 @@ class PetTracerSensorEntityDescription(SensorEntityDescription):
 
     value_fn: Callable[[Any], Any]
     extra_attrs_fn: Callable[[Any], dict[str, Any]] | None = None
+    display_name: str = ""
 
 
 def _get_battery_level(device: Any) -> int | None:
@@ -146,6 +147,7 @@ def _get_mode_attrs(device: Any) -> dict[str, Any]:
 SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     PetTracerSensorEntityDescription(
         key="battery_level",
+        display_name="Battery Level",
         device_class=SensorDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -153,6 +155,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="battery_voltage",
+        display_name="Battery Voltage",
         translation_key="battery_voltage",
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.MILLIVOLT,
@@ -162,6 +165,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="latitude",
+        display_name="Latitude",
         translation_key="latitude",
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:crosshairs-gps",
@@ -169,6 +173,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="longitude",
+        display_name="Longitude",
         translation_key="longitude",
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:crosshairs-gps",
@@ -176,6 +181,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="gps_accuracy",
+        display_name="GPS Accuracy",
         translation_key="gps_accuracy",
         device_class=SensorDeviceClass.DISTANCE,
         native_unit_of_measurement=UnitOfLength.METERS,
@@ -186,6 +192,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="last_contact",
+        display_name="Last Contact",
         translation_key="last_contact",
         device_class=SensorDeviceClass.TIMESTAMP,
         icon="mdi:clock-outline",
@@ -193,6 +200,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="satellites",
+        display_name="Satellites",
         translation_key="satellites",
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -201,6 +209,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="signal_strength",
+        display_name="Signal Strength",
         translation_key="signal_strength",
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
@@ -211,6 +220,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="position_time",
+        display_name="Position Time",
         translation_key="position_time",
         device_class=SensorDeviceClass.TIMESTAMP,
         icon="mdi:map-clock",
@@ -218,6 +228,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="status",
+        display_name="Status",
         translation_key="status",
         icon="mdi:information-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -225,6 +236,7 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     ),
     PetTracerSensorEntityDescription(
         key="mode",
+        display_name="Mode",
         translation_key="mode",
         icon="mdi:cog-outline",
         value_fn=_get_mode,
@@ -266,7 +278,7 @@ class PetTracerSensor(CoordinatorEntity, SensorEntity):
             device.details.name if device.details else f"PetTracer {device.id}"
         )
         self._attr_unique_id = f"pettracer_{device.id}_{description.key}"
-        self._attr_name = f"{self._device_name} {description.key.replace('_', ' ').title()}"
+        self._attr_name = f"{self._device_name} {description.display_name}"
 
     @property
     def device_info(self) -> dict[str, Any]:

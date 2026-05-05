@@ -133,7 +133,7 @@ async def test_gps_accuracy_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_gps_accuracy"
-    assert sensor.name == "Fluffy Gps Accuracy"
+    assert sensor.name == "Fluffy GPS Accuracy"
     assert sensor.device_class == SensorDeviceClass.DISTANCE
     assert sensor.native_unit_of_measurement == "m"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
