@@ -8,6 +8,13 @@
           "username": "Username",
           "password": "Password"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate PetTracer",
+        "description": "Your PetTracer credentials have expired. Please enter your new password.",
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -15,7 +22,8 @@
       "unknown": "Unexpected error occurred"
     },
     "abort": {
-      "already_configured": "Account is already configured"
+      "already_configured": "Account is already configured",
+      "reauth_successful": "Re-authentication was successful"
     }
   }
 }
