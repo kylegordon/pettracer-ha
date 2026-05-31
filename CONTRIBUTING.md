@@ -15,17 +15,29 @@ This repository uses [GitHub Copilot](https://github.com/features/copilot) (codi
 3. Copilot opens a pull request targeting `master`.
 4. The PR is reviewed and merged via GitHub — never pushed directly.
 
+### Merge Strategy and PR Titles
+
+This repository uses **squash merges only**. When a PR is merged, GitHub creates a single commit on `master` using the PR title as the commit message.
+
+**PR titles must follow [conventional commit](https://www.conventionalcommits.org/) format** — this is how release-please determines what changed and whether a release is needed:
+
+| PR title prefix | Effect |
+|---|---|
+| `fix: …` | Patch version bump; included in release notes |
+| `feat: …` | Minor version bump; included in release notes |
+| `fix!: …` / `feat!: …` | Major version bump (breaking change) |
+| `chore: …`, `docs: …`, `refactor: …`, `test: …`, `ci: …` | No version bump; included in changelog but do **not** trigger a release PR |
+
+> **Why this matters:** Release-please reads the squash commit message (i.e. the PR title) to decide what to include in the release PR. A PR merged without a conventional commit title will be invisible to release-please.
+
 ### Release Process
 
 Releases are fully automated via [release-please](https://github.com/googleapis/release-please). **No manual tagging or version bumping is required.**
 
 #### How it works
 
-1. Merge PRs to `master` using [conventional commit](https://www.conventionalcommits.org/) prefixes:
-   - `feat: …` → bumps minor version (e.g. 1.0.5 → 1.1.0)
-   - `fix: …` → bumps patch version (e.g. 1.0.5 → 1.0.6)
-   - `chore: …`, `docs: …`, etc. → no version bump (included in changelog)
-   - `feat!: …` or `fix!: …` (breaking change) → bumps major version
+1. Merge PRs to `master` with conventional commit PR titles (see table above).
+   Release-please reads the squash commit message (= PR title) to build the release.
 
 2. After each merge, the `release-please.yml` workflow automatically creates or updates a **release PR** that:
    - Bumps `version.txt` and `custom_components/pettracer/manifest.json`
@@ -38,10 +50,8 @@ Releases are fully automated via [release-please](https://github.com/googleapis/
 
 There is no step 4 — no manual tagging, no manual version edits.
 
-> **Important:** Only `fix:` and `feat:` commits (and breaking-change variants) trigger a release PR.
-> `chore:`, `docs:`, `refactor:`, `test:`, and `ci:` commits are tracked in the changelog but do **not**
-> create a release PR on their own. If only non-releasable commits have been merged since the last
-> release, the release-please workflow will run successfully but produce no PR — this is expected.
+> **Note:** If only `chore:`, `docs:`, `refactor:`, `test:`, or `ci:` PRs have been merged since the last
+> release, the workflow will run successfully but produce no release PR — this is expected behaviour.
 
 ### Branch Protection
 
