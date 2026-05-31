@@ -32,8 +32,10 @@ Runs on every push to `master`. Uses [release-please](https://github.com/googlea
 
 **Jobs:**
 
-1. **release-please** - Creates or updates a release PR when new commits land on master
-   - Reads conventional commit prefixes (`feat:`, `fix:`, `chore:`, etc.) to determine the next version
+1. **release-please** - Creates or updates a release PR when releasable commits land on master
+   - Only `fix:` and `feat:` commits (and breaking-change `!` variants) trigger a release PR
+   - `chore:`, `docs:`, `refactor:`, `test:`, `ci:` are included in the changelog but do **not** trigger a release PR
+   - If the workflow runs with no output PR, it means no releasable commits were found — this is expected behaviour
    - Keeps `version.txt` and `custom_components/pettracer/manifest.json` in sync
    - Updates `CHANGELOG.md`
 
