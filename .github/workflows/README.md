@@ -26,22 +26,21 @@ Runs on every push and pull request to master, main, or dev branches.
    - Validates translations
    - Checks HACS compatibility
 
-### `release-please.yml` - Automated Release Management
+### `release.yml` - Automated Release Management
 
-Runs on every push to `master`. Uses [release-please](https://github.com/googleapis/release-please) to automate versioning and releases.
+Runs on every push to `master`. Every merged PR is automatically included in the next release — no special PR title format required.
 
 **Jobs:**
 
-1. **release-please** - Creates or updates a release PR when releasable commits land on master
-   - Only `fix:` and `feat:` commits (and breaking-change `!` variants) trigger a release PR
-   - `chore:`, `docs:`, `refactor:`, `test:`, `ci:` are included in the changelog but do **not** trigger a release PR
-   - If the workflow runs with no output PR, it means no releasable commits were found — this is expected behaviour
-   - Keeps `version.txt` and `custom_components/pettracer/manifest.json` in sync
-   - Updates `CHANGELOG.md`
+1. **prepare-release** - Creates or updates a release PR after every merge to master
+   - Bumps the patch version in `manifest.json` and `version.txt`
+   - Uses GitHub's native release notes generation to list all PRs merged since the last release
+   - Skips itself when the release PR is being merged
 
-2. **upload-artifact** - Runs only when a release PR is merged
-   - Builds the HACS-compatible ZIP (`pettracer-{version}.zip`)
-   - Uploads the ZIP to the GitHub release
+2. **publish-release** - Runs when the release PR is merged
+   - Creates a git tag
+   - Publishes a GitHub release with auto-generated notes listing all included PRs
+   - Builds and uploads the HACS ZIP (`pettracer-{version}.zip`)
 
 ## Usage
 
@@ -57,7 +56,7 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 ### Triggering Workflows
 
 **Automatic triggers:**
-- Push to master/main/dev branches → Runs tests + release-please
+- Push to master/main/dev branches → Runs tests + release workflow
 - Create pull request → Runs tests and HACS validation
 
 **Manual triggers:**
@@ -69,14 +68,11 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 
 > **Important:** All changes must go through a pull request. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full workflow policy.
 
-Releases are fully automated — **no manual tagging or version bumping needed**.
+Releases are fully automated — **no manual tagging, no special commit format needed**.
 
-1. Merge PRs to `master` using conventional commit prefixes:
-   - `feat: …` → minor bump, `fix: …` → patch bump, `feat!: …` → major bump
-2. `release-please.yml` automatically creates or updates a release PR with updated changelog and version files.
-3. When ready to release: **merge the release PR**. Release-please creates the tag, publishes the GitHub release, and triggers the ZIP artifact upload.
-
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full conventional commits reference.
+1. Merge PRs to `master` as normal.
+2. `release.yml` automatically creates or updates a release PR bumping the patch version and listing every merged PR.
+3. When ready to release: **merge the release PR**. The workflow creates the tag, publishes the GitHub release, and uploads the HACS ZIP.
 
 ## Status Badges
 
@@ -107,5 +103,5 @@ Coverage reports are uploaded to Codecov on each test run. To view:
 
 ### Release Workflow Issues
 - Check GITHUB_TOKEN has `contents: write` and `pull-requests: write` permissions
-- Verify `release-please-config.json` and `.release-please-manifest.json` are valid JSON
-- Verify manifest.json is valid JSON (updated automatically by release-please)
+- Ensure "Allow GitHub Actions to create and approve pull requests" is enabled in repo Settings → Actions → General
+- Verify manifest.json is valid JSON
