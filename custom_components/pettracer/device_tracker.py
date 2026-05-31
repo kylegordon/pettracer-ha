@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from homeassistant.components.device_tracker import SourceType
@@ -13,8 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-
-_LOGGER = logging.getLogger(__name__)
+from .utils import battery_mv_to_percentage
 
 
 async def async_setup_entry(
@@ -25,7 +23,6 @@ async def async_setup_entry(
     """Set up PetTracer device trackers based on a config entry."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
-    # Create a tracker for each device
     entities = []
     for device in coordinator.data.get("devices", []):
         entities.append(PetTracerDeviceTracker(coordinator, device))
@@ -48,24 +45,9 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
 
     def _get_device_data(self):
         """Get updated device data from coordinator."""
-        devices = self.coordinator.data.get("devices", [])
-        _LOGGER.debug(
-            "Looking for device %s among %s devices in coordinator data",
-            self._device_id,
-            len(devices),
-        )
-        for device in devices:
-            _LOGGER.debug(
-                "Checking device ID %s against target %s", device.id, self._device_id
-            )
+        for device in self.coordinator.data.get("devices", []):
             if device.id == self._device_id:
-                _LOGGER.debug("Found matching device %s", self._device_id)
                 return device
-        _LOGGER.warning(
-            "Device %s (tracker: %s) not found in coordinator data!",
-            self._device_id,
-            self._attr_name,
-        )
         return None
 
     @property
@@ -82,17 +64,7 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        device = self._get_device_data()
-        is_available = device is not None
-        _LOGGER.debug(
-            "Device tracker %s (ID: %s) availability check: %s (device found: %s, has lastPos: %s)",
-            self._attr_name,
-            self._device_id,
-            is_available,
-            device is not None,
-            device.lastPos is not None if device else False,
-        )
-        return is_available
+        return self._get_device_data() is not None
 
     @property
     def source_type(self) -> SourceType:
@@ -104,21 +76,7 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Return latitude value of the device."""
         device = self._get_device_data()
         if device and device.lastPos:
-            lat = device.lastPos.posLat
-            _LOGGER.debug(
-                "Device tracker %s latitude: %s (has lastPos: %s, posLat: %s)",
-                self._attr_name,
-                lat,
-                device.lastPos is not None,
-                lat,
-            )
-            return lat
-        _LOGGER.debug(
-            "Device tracker %s latitude: None (device: %s, has lastPos: %s)",
-            self._attr_name,
-            device is not None,
-            device.lastPos is not None if device else False,
-        )
+            return device.lastPos.posLat
         return None
 
     @property
@@ -126,21 +84,7 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Return longitude value of the device."""
         device = self._get_device_data()
         if device and device.lastPos:
-            lon = device.lastPos.posLong
-            _LOGGER.debug(
-                "Device tracker %s longitude: %s (has lastPos: %s, posLong: %s)",
-                self._attr_name,
-                lon,
-                device.lastPos is not None,
-                lon,
-            )
-            return lon
-        _LOGGER.debug(
-            "Device tracker %s longitude: None (device: %s, has lastPos: %s)",
-            self._attr_name,
-            device is not None,
-            device.lastPos is not None if device else False,
-        )
+            return device.lastPos.posLong
         return None
 
     @property
@@ -156,16 +100,7 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Return the battery level of the device."""
         device = self._get_device_data()
         if device and device.bat:
-            # Convert from millivolts to percentage
-            # Based on actual PetTracer device behavior:
-            # 4200mV = 100%, 3600mV = 0%
-            mv = device.bat
-            if mv >= 4200:
-                return 100
-            elif mv <= 3600:
-                return 0
-            else:
-                return int(((mv - 3600) / 600) * 100)
+            return battery_mv_to_percentage(device.bat)
         return None
 
     @property

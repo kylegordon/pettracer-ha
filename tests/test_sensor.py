@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EntityCategory
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -12,6 +12,10 @@ from homeassistant.components.sensor import (
 )
 
 from custom_components.pettracer.const import DOMAIN
+from custom_components.pettracer.sensor import (
+    SENSOR_DESCRIPTIONS,
+    PetTracerSensor,
+)
 
 
 async def test_sensor_setup(hass, mock_pettracer_client_init, mock_device):
@@ -51,33 +55,17 @@ async def test_sensor_setup(hass, mock_pettracer_client_init, mock_device):
 
         await sensor_setup(hass, entry, mock_add_entities)
 
-        # Should create 12 sensors per device
-        assert len(entities) == 12
-
-        # Check sensor types
-        sensor_types = [type(e).__name__ for e in entities]
-        assert "PetTracerBatterySensor" in sensor_types
-        assert "PetTracerBatteryVoltageSensor" in sensor_types
-        assert "PetTracerLatitudeSensor" in sensor_types
-        assert "PetTracerLongitudeSensor" in sensor_types
-        assert "PetTracerGPSAccuracySensor" in sensor_types
-        assert "PetTracerLastContactSensor" in sensor_types
-        assert "PetTracerSatellitesSensor" in sensor_types
-        assert "PetTracerSignalStrengthSensor" in sensor_types
-        assert "PetTracerPositionTimeSensor" in sensor_types
-        assert "PetTracerStatusSensor" in sensor_types
-        assert "PetTracerModeSensor" in sensor_types
-        assert "PetTracerAtHomeSensor" in sensor_types
+        # Should create 11 sensors per device (AtHome moved to binary_sensor)
+        assert len(entities) == 11
 
 
 async def test_battery_sensor(hass, mock_device):
     """Test battery level sensor."""
-    from custom_components.pettracer.sensor import PetTracerBatterySensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerBatterySensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "battery_level")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_battery_level"
     assert sensor.name == "Fluffy Battery Level"
@@ -93,29 +81,28 @@ async def test_battery_sensor(hass, mock_device):
 
 async def test_battery_voltage_sensor(hass, mock_device):
     """Test battery voltage sensor."""
-    from custom_components.pettracer.sensor import PetTracerBatteryVoltageSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerBatteryVoltageSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "battery_voltage")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_battery_voltage"
     assert sensor.name == "Fluffy Battery Voltage"
     assert sensor.device_class == SensorDeviceClass.VOLTAGE
     assert sensor.native_unit_of_measurement == "mV"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
+    assert sensor.entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.native_value == 4100
 
 
 async def test_latitude_sensor(hass, mock_device):
     """Test latitude sensor."""
-    from custom_components.pettracer.sensor import PetTracerLatitudeSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerLatitudeSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "latitude")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_latitude"
     assert sensor.name == "Fluffy Latitude"
@@ -125,12 +112,11 @@ async def test_latitude_sensor(hass, mock_device):
 
 async def test_longitude_sensor(hass, mock_device):
     """Test longitude sensor."""
-    from custom_components.pettracer.sensor import PetTracerLongitudeSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerLongitudeSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "longitude")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_longitude"
     assert sensor.name == "Fluffy Longitude"
@@ -140,30 +126,30 @@ async def test_longitude_sensor(hass, mock_device):
 
 async def test_gps_accuracy_sensor(hass, mock_device):
     """Test GPS accuracy sensor."""
-    from custom_components.pettracer.sensor import PetTracerGPSAccuracySensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerGPSAccuracySensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "gps_accuracy")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_gps_accuracy"
     assert sensor.name == "Fluffy GPS Accuracy"
     assert sensor.device_class == SensorDeviceClass.DISTANCE
     assert sensor.native_unit_of_measurement == "m"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
+    assert sensor.entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.native_value == 10
 
 
 async def test_last_contact_sensor(hass, mock_device):
     """Test last contact sensor."""
     from datetime import datetime
-    from custom_components.pettracer.sensor import PetTracerLastContactSensor
 
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerLastContactSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "last_contact")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_last_contact"
     assert sensor.name == "Fluffy Last Contact"
@@ -173,44 +159,43 @@ async def test_last_contact_sensor(hass, mock_device):
 
 async def test_satellites_sensor(hass, mock_device):
     """Test satellites sensor."""
-    from custom_components.pettracer.sensor import PetTracerSatellitesSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerSatellitesSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "satellites")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_satellites"
     assert sensor.name == "Fluffy Satellites"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
+    assert sensor.entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.native_value == 8
 
 
 async def test_signal_strength_sensor(hass, mock_device):
     """Test signal strength sensor."""
-    from custom_components.pettracer.sensor import PetTracerSignalStrengthSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerSignalStrengthSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "signal_strength")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_signal_strength"
     assert sensor.name == "Fluffy Signal Strength"
     assert sensor.device_class == SensorDeviceClass.SIGNAL_STRENGTH
     assert sensor.native_unit_of_measurement == "dBm"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
+    assert sensor.entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.native_value == -65
 
 
 async def test_position_time_sensor(hass, mock_device):
     """Test position time sensor."""
-    from custom_components.pettracer.sensor import PetTracerPositionTimeSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerPositionTimeSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "position_time")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_position_time"
     assert sensor.name == "Fluffy Position Time"
@@ -221,26 +206,25 @@ async def test_position_time_sensor(hass, mock_device):
 
 async def test_status_sensor(hass, mock_device):
     """Test status sensor."""
-    from custom_components.pettracer.sensor import PetTracerStatusSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerStatusSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "status")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_status"
     assert sensor.name == "Fluffy Status"
+    assert sensor.entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.native_value == 0
 
 
 async def test_mode_sensor(hass, mock_device):
     """Test mode sensor."""
-    from custom_components.pettracer.sensor import PetTracerModeSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerModeSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "mode")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_mode"
     assert sensor.name == "Fluffy Mode"
@@ -250,7 +234,6 @@ async def test_mode_sensor(hass, mock_device):
 
 async def test_mode_sensor_all_modes(hass, mock_device):
     """Test mode sensor with all valid mode values."""
-    from custom_components.pettracer.sensor import PetTracerModeSensor
     from custom_components.pettracer.const import (
         MODE_LIVE,
         MODE_FAST_PLUS,
@@ -263,7 +246,8 @@ async def test_mode_sensor_all_modes(hass, mock_device):
 
     coordinator = MagicMock()
 
-    sensor = PetTracerModeSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "mode")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     # Test all mode mappings
     test_cases = [
@@ -279,18 +263,17 @@ async def test_mode_sensor_all_modes(hass, mock_device):
     for mode_value, mode_name in test_cases:
         mock_device.mode = mode_value
         coordinator.data = {"devices": [mock_device]}
-        
+
         assert sensor.native_value == mode_name
         assert sensor.extra_state_attributes == {"mode_number": mode_value}
 
 
 async def test_mode_sensor_unrecognized(hass, mock_device):
     """Test mode sensor with unrecognized mode value."""
-    from custom_components.pettracer.sensor import PetTracerModeSensor
-
     coordinator = MagicMock()
 
-    sensor = PetTracerModeSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "mode")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     # Set an unrecognized mode value
     mock_device.mode = 999
@@ -300,61 +283,24 @@ async def test_mode_sensor_unrecognized(hass, mock_device):
     assert sensor.extra_state_attributes == {"mode_number": 999}
 
 
-async def test_at_home_sensor(hass, mock_device):
-    """Test at home sensor."""
-    from custom_components.pettracer.sensor import PetTracerAtHomeSensor
-
-    coordinator = MagicMock()
-    coordinator.data = {"devices": [mock_device]}
-
-    sensor = PetTracerAtHomeSensor(coordinator, mock_device)
-
-    assert sensor.unique_id == "pettracer_12345_at_home"
-    assert sensor.name == "Fluffy At Home"
-    assert sensor.native_value == "true"
-
-
 async def test_sensor_no_position(hass, mock_device_no_position):
     """Test sensors with no position data."""
-    from custom_components.pettracer.sensor import (
-        PetTracerLatitudeSensor,
-        PetTracerLongitudeSensor,
-        PetTracerGPSAccuracySensor,
-        PetTracerSatellitesSensor,
-        PetTracerSignalStrengthSensor,
-        PetTracerPositionTimeSensor,
-    )
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device_no_position]}
 
-    lat_sensor = PetTracerLatitudeSensor(coordinator, mock_device_no_position)
-    assert lat_sensor.native_value is None
-
-    lon_sensor = PetTracerLongitudeSensor(coordinator, mock_device_no_position)
-    assert lon_sensor.native_value is None
-
-    acc_sensor = PetTracerGPSAccuracySensor(coordinator, mock_device_no_position)
-    assert acc_sensor.native_value is None
-
-    sat_sensor = PetTracerSatellitesSensor(coordinator, mock_device_no_position)
-    assert sat_sensor.native_value is None
-
-    sig_sensor = PetTracerSignalStrengthSensor(coordinator, mock_device_no_position)
-    assert sig_sensor.native_value is None
-
-    pos_sensor = PetTracerPositionTimeSensor(coordinator, mock_device_no_position)
-    assert pos_sensor.native_value is None
+    for key in ("latitude", "longitude", "gps_accuracy", "satellites", "signal_strength", "position_time"):
+        description = next(d for d in SENSOR_DESCRIPTIONS if d.key == key)
+        sensor = PetTracerSensor(coordinator, mock_device_no_position, description)
+        assert sensor.native_value is None
 
 
 async def test_sensor_device_info(hass, mock_device):
     """Test sensor device info."""
-    from custom_components.pettracer.sensor import PetTracerBatterySensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerBatterySensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "battery_level")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
     device_info = sensor.device_info
 
     assert device_info["identifiers"] == {(DOMAIN, 12345)}
@@ -366,12 +312,11 @@ async def test_sensor_device_info(hass, mock_device):
 
 async def test_sensor_coordinator_update(hass, mock_device):
     """Test sensor updates from coordinator."""
-    from custom_components.pettracer.sensor import PetTracerLatitudeSensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerLatitudeSensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "latitude")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     # Initial value
     assert sensor.native_value == 51.5074
@@ -386,13 +331,12 @@ async def test_sensor_coordinator_update(hass, mock_device):
 
 async def test_multiple_devices_sensors(hass, mock_device, mock_device_no_position):
     """Test sensors with multiple devices."""
-    from custom_components.pettracer.sensor import PetTracerBatterySensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device, mock_device_no_position]}
 
-    sensor1 = PetTracerBatterySensor(coordinator, mock_device)
-    sensor2 = PetTracerBatterySensor(coordinator, mock_device_no_position)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "battery_level")
+    sensor1 = PetTracerSensor(coordinator, mock_device, description)
+    sensor2 = PetTracerSensor(coordinator, mock_device_no_position, description)
 
     assert sensor1.unique_id == "pettracer_12345_battery_level"
     assert sensor2.unique_id == "pettracer_12346_battery_level"
@@ -402,8 +346,6 @@ async def test_multiple_devices_sensors(hass, mock_device, mock_device_no_positi
 
 async def test_sensor_no_details(hass):
     """Test sensor when device has no details."""
-    from custom_components.pettracer.sensor import PetTracerBatterySensor
-
     device = MagicMock()
     device.id = 99999
     device.details = None
@@ -414,7 +356,8 @@ async def test_sensor_no_details(hass):
     coordinator = MagicMock()
     coordinator.data = {"devices": [device]}
 
-    sensor = PetTracerBatterySensor(coordinator, device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "battery_level")
+    sensor = PetTracerSensor(coordinator, device, description)
 
     assert sensor.unique_id == "pettracer_99999_battery_level"
     assert sensor.name == "PetTracer 99999 Battery Level"
@@ -426,12 +369,11 @@ async def test_sensor_no_details(hass):
 
 async def test_battery_percentage_edge_cases(hass, mock_device):
     """Test battery percentage calculation with edge cases."""
-    from custom_components.pettracer.sensor import PetTracerBatterySensor
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
-    sensor = PetTracerBatterySensor(coordinator, mock_device)
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "battery_level")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
 
     # Test minimum voltage (3600mV = 0%)
     mock_device.bat = 3600

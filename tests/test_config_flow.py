@@ -163,3 +163,88 @@ async def test_form_case_insensitive_username(hass, mock_setup_entry):
     assert result2["type"] == FlowResultType.CREATE_ENTRY
     # Verify the unique_id is lowercase
     assert result2["data"][CONF_USERNAME] == "TEST@EXAMPLE.COM"
+
+
+async def test_reauth_flow(hass, mock_setup_entry):
+    """Test reauth flow shows the confirm form."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "old_password",
+        },
+        unique_id="test@example.com",
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "reauth_confirm"
+
+
+async def test_reauth_flow_success(hass, mock_setup_entry):
+    """Test successful reauth flow."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "old_password",
+        },
+        unique_id="test@example.com",
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = MagicMock()
+        client_instance.login = AsyncMock()
+        mock_client.return_value = client_instance
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_PASSWORD: "new_password"},
+        )
+
+    assert result2["type"] == FlowResultType.ABORT
+    assert result2["reason"] == "reauth_successful"
+    assert entry.data[CONF_PASSWORD] == "new_password"
+
+
+async def test_reauth_flow_invalid_auth(hass, mock_setup_entry):
+    """Test reauth flow with invalid credentials."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "old_password",
+        },
+        unique_id="test@example.com",
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = MagicMock()
+        client_instance.login = AsyncMock(side_effect=PetTracerError("Invalid"))
+        mock_client.return_value = client_instance
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_PASSWORD: "wrong_password"},
+        )
+
+    assert result2["type"] == FlowResultType.FORM
+    assert result2["errors"] == {"base": "invalid_auth"}

@@ -8,16 +8,20 @@ from datetime import timedelta
 from pettracer import PetTracerClient, PetTracerError
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import CONF_PASSWORD, CONF_USERNAME, DOMAIN, UPDATE_INTERVAL_SECONDS
+from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER, Platform.SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.DEVICE_TRACKER,
+    Platform.SENSOR,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -46,7 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # Forward the setup to the device_tracker platform
+    # Forward the setup to platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
@@ -76,10 +80,9 @@ class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
             config_entry=entry,
         )
 
-    async def _async_update_data(self):
+    async def _async_update_data(self) -> dict:
         """Fetch data from PetTracer API."""
         try:
-            # Fetch all devices
             devices = await self.client.get_all_devices()
             return {"devices": devices}
         except PetTracerError as err:

@@ -1,11 +1,10 @@
 """Test constants for PetTracer integration."""
 import pytest
 
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+
 from custom_components.pettracer.const import (
-    CONF_PASSWORD,
-    CONF_USERNAME,
     DOMAIN,
-    PLATFORM_DEVICE_TRACKER,
     UPDATE_INTERVAL_SECONDS,
     MODE_LIVE,
     MODE_FAST_PLUS,
@@ -25,7 +24,7 @@ def test_domain():
 
 
 def test_conf_constants():
-    """Test configuration constants."""
+    """Test configuration constants match homeassistant.const values."""
     assert CONF_USERNAME == "username"
     assert CONF_PASSWORD == "password"
 
@@ -35,11 +34,6 @@ def test_update_interval():
     assert UPDATE_INTERVAL_SECONDS == 60
     assert isinstance(UPDATE_INTERVAL_SECONDS, int)
     assert UPDATE_INTERVAL_SECONDS > 0
-
-
-def test_platform_constant():
-    """Test platform constant."""
-    assert PLATFORM_DEVICE_TRACKER == "device_tracker"
 
 
 def test_mode_constants():
