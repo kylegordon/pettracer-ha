@@ -38,6 +38,11 @@ Releases are fully automated via [release-please](https://github.com/googleapis/
 
 There is no step 4 — no manual tagging, no manual version edits.
 
+> **Important:** Only `fix:` and `feat:` commits (and breaking-change variants) trigger a release PR.
+> `chore:`, `docs:`, `refactor:`, `test:`, and `ci:` commits are tracked in the changelog but do **not**
+> create a release PR on their own. If only non-releasable commits have been merged since the last
+> release, the release-please workflow will run successfully but produce no PR — this is expected.
+
 ### Branch Protection
 
 The `master` branch has branch protection enabled:
