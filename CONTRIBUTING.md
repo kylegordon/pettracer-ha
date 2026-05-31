@@ -17,18 +17,26 @@ This repository uses [GitHub Copilot](https://github.com/features/copilot) (codi
 
 ### Release Process
 
-Releases are triggered by pushing a version tag **after** the version bump has been merged via PR:
+Releases are fully automated via [release-please](https://github.com/googleapis/release-please). **No manual tagging or version bumping is required.**
 
-1. Open a Copilot task to bump the version in `custom_components/pettracer/manifest.json`.
-2. Let Copilot create a branch and PR for the version bump.
-3. Review and merge the PR.
-4. Tag the merge commit and push the tag:
-   ```bash
-   git fetch origin
-   git tag vX.Y.Z origin/master
-   git push origin vX.Y.Z
-   ```
-5. The `release-on-tag.yml` workflow automatically creates the GitHub release.
+#### How it works
+
+1. Merge PRs to `master` using [conventional commit](https://www.conventionalcommits.org/) prefixes:
+   - `feat: …` → bumps minor version (e.g. 1.0.5 → 1.1.0)
+   - `fix: …` → bumps patch version (e.g. 1.0.5 → 1.0.6)
+   - `chore: …`, `docs: …`, etc. → no version bump (included in changelog)
+   - `feat!: …` or `fix!: …` (breaking change) → bumps major version
+
+2. After each merge, the `release-please.yml` workflow automatically creates or updates a **release PR** that:
+   - Bumps `version.txt` and `custom_components/pettracer/manifest.json`
+   - Updates `CHANGELOG.md`
+
+3. When you're ready to release, **merge the release PR**. Release-please then:
+   - Creates a git tag (e.g. `v1.0.6`)
+   - Publishes a GitHub release with changelog notes
+   - Triggers the HACS ZIP artifact upload
+
+There is no step 4 — no manual tagging, no manual version edits.
 
 ### Branch Protection
 
