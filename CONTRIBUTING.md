@@ -11,37 +11,18 @@ This applies to everyone — including automated tools and maintainers.
 This repository uses [GitHub Copilot](https://github.com/features/copilot) (coding agent) to implement changes:
 
 1. A Copilot task is started with a description of the desired change.
-2. Copilot creates a new branch (e.g. `copilot/my-feature`) and implements the change there.
-3. Copilot opens a pull request targeting `master`.
-4. The PR is reviewed and merged via GitHub — never pushed directly.
+2. Copilot creates a new branch and opens a pull request targeting `master`.
+3. The PR is reviewed and merged — never pushed directly.
+
+PR titles can be anything descriptive. No special format is required.
 
 ### Release Process
 
-Releases are fully automated via [release-please](https://github.com/googleapis/release-please). **No manual tagging or version bumping is required.**
+Releases are automated. No manual tagging or version bumping needed.
 
-#### How it works
-
-1. Merge PRs to `master` using [conventional commit](https://www.conventionalcommits.org/) prefixes:
-   - `feat: …` → bumps minor version (e.g. 1.0.5 → 1.1.0)
-   - `fix: …` → bumps patch version (e.g. 1.0.5 → 1.0.6)
-   - `chore: …`, `docs: …`, etc. → no version bump (included in changelog)
-   - `feat!: …` or `fix!: …` (breaking change) → bumps major version
-
-2. After each merge, the `release-please.yml` workflow automatically creates or updates a **release PR** that:
-   - Bumps `version.txt` and `custom_components/pettracer/manifest.json`
-   - Updates `CHANGELOG.md`
-
-3. When you're ready to release, **merge the release PR**. Release-please then:
-   - Creates a git tag (e.g. `v1.0.6`)
-   - Publishes a GitHub release with changelog notes
-   - Triggers the HACS ZIP artifact upload
-
-There is no step 4 — no manual tagging, no manual version edits.
-
-> **Important:** Only `fix:` and `feat:` commits (and breaking-change variants) trigger a release PR.
-> `chore:`, `docs:`, `refactor:`, `test:`, and `ci:` commits are tracked in the changelog but do **not**
-> create a release PR on their own. If only non-releasable commits have been merged since the last
-> release, the release-please workflow will run successfully but produce no PR — this is expected.
+1. Merge PRs to `master` as normal. Every merged PR is automatically included in the next release.
+2. After each merge, the `release.yml` workflow creates or updates a **release PR** that bumps the patch version and lists all PRs merged since the last release.
+3. When ready to ship, **merge the release PR**. The workflow then creates a git tag, publishes a GitHub release, and uploads the HACS ZIP.
 
 ### Branch Protection
 
