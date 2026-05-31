@@ -66,16 +66,15 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 
 ### Creating a Release
 
-1. Update version in `custom_components/pettracer/manifest.json`
-2. Commit and push changes to master:
+> **Important:** All changes must go through a pull request. Do not push directly to `master`.
+> See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full workflow policy.
+
+1. Use a Copilot task (or a feature branch + PR) to bump the version in `custom_components/pettracer/manifest.json`.
+2. Review and merge the PR into `master`.
+3. Tag the merge commit and push the tag:
    ```bash
-   git add custom_components/pettracer/manifest.json
-   git commit -m "Bump version to 1.0.4"
-   git push origin master
-   ```
-3. Create and push a version tag:
-   ```bash
-   git tag v1.0.4
+   git fetch origin
+   git tag v1.0.4 origin/master
    git push origin v1.0.4
    ```
 4. The `release-on-tag.yml` workflow automatically:
