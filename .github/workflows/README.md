@@ -26,20 +26,20 @@ Runs on every push and pull request to master, main, or dev branches.
    - Validates translations
    - Checks HACS compatibility
 
-### `release-on-tag.yml` - Tag-Based Release Automation
-Automatically creates releases when a new version tag is pushed.
+### `release-please.yml` - Automated Release Management
 
-Runs on:
-- Push of tags matching `v*.*.*` pattern (e.g., v1.0.0, v1.2.3)
+Runs on every push to `master`. Uses [release-please](https://github.com/googleapis/release-please) to automate versioning and releases.
 
-Steps:
-1. Extracts version from tag name
-2. Generates automated release notes including:
-   - PR titles and authors from commits between tags
-   - Full commit history
-   - Installation instructions
-3. Creates ZIP archive of the integration
-4. Creates GitHub release with generated notes and ZIP artifact
+**Jobs:**
+
+1. **release-please** - Creates or updates a release PR when new commits land on master
+   - Reads conventional commit prefixes (`feat:`, `fix:`, `chore:`, etc.) to determine the next version
+   - Keeps `version.txt` and `custom_components/pettracer/manifest.json` in sync
+   - Updates `CHANGELOG.md`
+
+2. **upload-artifact** - Runs only when a release PR is merged
+   - Builds the HACS-compatible ZIP (`pettracer-{version}.zip`)
+   - Uploads the ZIP to the GitHub release
 
 ## Usage
 
@@ -55,9 +55,8 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 ### Triggering Workflows
 
 **Automatic triggers:**
-- Push to master/main/dev branches → Runs tests
+- Push to master/main/dev branches → Runs tests + release-please
 - Create pull request → Runs tests and HACS validation
-- Push tag matching v*.*.* → Creates release with automated notes
 
 **Manual triggers:**
 - Go to Actions tab in GitHub
@@ -66,21 +65,16 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 
 ### Creating a Release
 
-> **Important:** All changes must go through a pull request. Do not push directly to `master`.
-> See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full workflow policy.
+> **Important:** All changes must go through a pull request. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full workflow policy.
 
-1. Use a Copilot task (or a feature branch + PR) to bump the version in `custom_components/pettracer/manifest.json`.
-2. Review and merge the PR into `master`.
-3. Tag the merge commit and push the tag:
-   ```bash
-   git fetch origin
-   git tag v1.0.4 origin/master
-   git push origin v1.0.4
-   ```
-4. The `release-on-tag.yml` workflow automatically:
-   - Generates release notes from PRs and commits
-   - Creates a ZIP package
-   - Publishes the GitHub release
+Releases are fully automated — **no manual tagging or version bumping needed**.
+
+1. Merge PRs to `master` using conventional commit prefixes:
+   - `feat: …` → minor bump, `fix: …` → patch bump, `feat!: …` → major bump
+2. `release-please.yml` automatically creates or updates a release PR with updated changelog and version files.
+3. When ready to release: **merge the release PR**. Release-please creates the tag, publishes the GitHub release, and triggers the ZIP artifact upload.
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full conventional commits reference.
 
 ## Status Badges
 
@@ -110,6 +104,6 @@ Coverage reports are uploaded to Codecov on each test run. To view:
 - Verify integration follows HACS guidelines
 
 ### Release Workflow Issues
-- Ensure tag format is `v*.*.*` (e.g., v1.0.4)
-- Check GITHUB_TOKEN has sufficient permissions
-- Verify manifest.json is valid JSON
+- Check GITHUB_TOKEN has `contents: write` and `pull-requests: write` permissions
+- Verify `release-please-config.json` and `.release-please-manifest.json` are valid JSON
+- Verify manifest.json is valid JSON (updated automatically by release-please)
