@@ -58,7 +58,7 @@ jobs:
           echo "$NEXT" > version.txt
 
       - name: Create or update release PR
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: release v${{ steps.version.outputs.next }}"
