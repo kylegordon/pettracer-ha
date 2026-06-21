@@ -1,12 +1,16 @@
 {
   "domain": "pettracer",
   "name": "PetTracer GPS Tracker",
-  "codeowners": ["@kylegordon"],
+  "codeowners": [
+    "@kylegordon"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/kylegordon/petTracer-ha",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/kylegordon/pettracer-ha/issues",
-  "requirements": ["pettracer-client==0.2.0"],
-  "version": "1.0.5"
+  "requirements": [
+    "pettracer-client==0.2.0"
+  ],
+  "version": "1.0.6"
 }
