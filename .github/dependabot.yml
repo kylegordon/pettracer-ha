@@ -11,6 +11,13 @@ updates:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
+    groups:
+      minor-and-patch-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Python dependencies
   - package-ecosystem: "pip"
@@ -23,10 +30,11 @@ updates:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
-    # Group all patch updates together
+    # Group minor and patch updates together
     groups:
-      patch-updates:
+      minor-and-patch-updates:
         patterns:
           - "*"
         update-types:
+          - "minor"
           - "patch"

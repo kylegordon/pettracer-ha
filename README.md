@@ -231,6 +231,29 @@ If the integration fails to load:
 - Ensure the `pettracer-client` library is installed (should be automatic)
 - Restart Home Assistant after installation
 
+## Releasing
+
+Releases are fully automated — no manual steps required beyond merging PRs.
+
+### How it works
+
+1. **Merge any PR to `master`** — no special title format needed.
+2. The `Release` workflow automatically:
+   - Bumps the patch version (e.g. `1.0.5` → `1.0.6`)
+   - Generates release notes listing every PR merged since the last release
+   - Creates or updates a `release/next` pull request
+3. **Review and merge the release PR** when you're ready to publish.
+4. Merging the release PR triggers the workflow again to:
+   - Create a git tag (e.g. `v1.0.6`)
+   - Publish a GitHub Release with auto-generated notes
+   - Attach a HACS-installable ZIP package to the release
+
+### Notes
+
+- The release PR is updated automatically each time a new PR lands on `master`, so you can let several changes accumulate before publishing.
+- The release PR title always starts with `chore: release v…` — merging it is the trigger for publishing.
+- No conventional commit format is required on PR titles; all merged PRs are included in the release notes regardless of wording.
+
 ## Development
 
 This integration is built using:
