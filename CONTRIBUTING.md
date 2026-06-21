@@ -14,6 +14,10 @@ This repository uses [GitHub Copilot](https://github.com/features/copilot) (codi
 2. Copilot creates a new branch and opens a pull request targeting `master`.
 3. The PR is reviewed and merged — never pushed directly.
 
+### Merge Strategy and PR Titles
+
+This repository uses **squash merges only**. When a PR is merged, GitHub creates a single commit on `master` using the PR title as the commit message.
+
 PR titles can be anything descriptive. No special format is required.
 
 ### Release Process
