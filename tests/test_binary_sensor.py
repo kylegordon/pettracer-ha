@@ -9,7 +9,10 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 
 from custom_components.pettracer.const import DOMAIN
-from custom_components.pettracer.binary_sensor import PetTracerAtHomeBinarySensor
+from custom_components.pettracer.binary_sensor import (
+    PetTracerAtHomeBinarySensor,
+    PetTracerChargingBinarySensor,
+)
 
 
 async def test_binary_sensor_setup(hass, mock_pettracer_client_init, mock_device):
@@ -48,8 +51,9 @@ async def test_binary_sensor_setup(hass, mock_pettracer_client_init, mock_device
 
         await binary_sensor_setup(hass, entry, mock_add_entities)
 
-        assert len(entities) == 1
+        assert len(entities) == 2
         assert isinstance(entities[0], PetTracerAtHomeBinarySensor)
+        assert isinstance(entities[1], PetTracerChargingBinarySensor)
 
 
 async def test_at_home_binary_sensor_true(hass, mock_device):
@@ -99,6 +103,61 @@ async def test_at_home_binary_sensor_device_info(hass, mock_device):
     coordinator.data = {"devices": [mock_device]}
 
     sensor = PetTracerAtHomeBinarySensor(coordinator, mock_device)
+    device_info = sensor.device_info
+
+    assert device_info["identifiers"] == {(DOMAIN, 12345)}
+    assert device_info["name"] == "Fluffy"
+    assert device_info["manufacturer"] == "PetTracer"
+    assert device_info["model"] == "GPS Collar"
+
+
+async def test_charging_binary_sensor_true(hass, mock_device):
+    """Test charging binary sensor when collar is charging."""
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    sensor = PetTracerChargingBinarySensor(coordinator, mock_device)
+
+    assert sensor.unique_id == "pettracer_12345_charging"
+    assert sensor.name == "Fluffy Charging"
+    assert sensor.device_class == BinarySensorDeviceClass.BATTERY_CHARGING
+    assert sensor.is_on is True
+
+
+async def test_charging_binary_sensor_false(hass, mock_device_no_position):
+    """Test charging binary sensor when collar is not charging."""
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device_no_position]}
+
+    sensor = PetTracerChargingBinarySensor(coordinator, mock_device_no_position)
+
+    assert sensor.unique_id == "pettracer_12346_charging"
+    assert sensor.name == "Rex Charging"
+    assert sensor.is_on is False
+
+
+async def test_charging_binary_sensor_none(hass):
+    """Test charging binary sensor when chg is None."""
+    device = MagicMock()
+    device.id = 99999
+    device.details = None
+    device.chg = None
+    device.sw = None
+
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [device]}
+
+    sensor = PetTracerChargingBinarySensor(coordinator, device)
+
+    assert sensor.is_on is None
+
+
+async def test_charging_binary_sensor_device_info(hass, mock_device):
+    """Test charging binary sensor device info."""
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    sensor = PetTracerChargingBinarySensor(coordinator, mock_device)
     device_info = sensor.device_info
 
     assert device_info["identifiers"] == {(DOMAIN, 12345)}

@@ -62,6 +62,7 @@ def mock_device():
     device.status = 0
     device.mode = 1
     device.home = True
+    device.chg = 1
     device.sw = 656393
     device.lastContact = datetime(2026, 1, 11, 10, 30, 0)
     
@@ -90,6 +91,7 @@ def mock_device_no_position():
     device.status = 0
     device.mode = 1
     device.home = False
+    device.chg = 0
     device.sw = 656393
     device.lastContact = datetime(2026, 1, 11, 10, 0, 0)
     

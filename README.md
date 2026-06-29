@@ -261,6 +261,44 @@ This integration is built using:
 - Home Assistant integration framework
 - Config flow for easy setup
 
+### Local Development
+
+All development is done inside Docker to avoid polluting your host with dependencies.
+
+**Build the dev image** (once, and after `requirements-test.txt` changes):
+
+```bash
+docker build -f Dockerfile.dev -t pettracer-dev .
+```
+
+**Run the full test suite:**
+
+```bash
+docker run --rm -v "$PWD":/workspace pettracer-dev \
+  pytest --cov=custom_components.pettracer --cov-report=term -v
+```
+
+**Run a single test file:**
+
+```bash
+docker run --rm -v "$PWD":/workspace pettracer-dev pytest tests/test_sensor.py -v
+```
+
+**Lint / format:**
+
+```bash
+docker run --rm -v "$PWD":/workspace pettracer-dev ruff check custom_components/pettracer/
+docker run --rm -v "$PWD":/workspace pettracer-dev ruff format custom_components/pettracer/
+```
+
+**Interactive shell:**
+
+```bash
+docker run --rm -it -v "$PWD":/workspace pettracer-dev bash
+```
+
+The source tree is bind-mounted at `/workspace`, so code changes take effect immediately without rebuilding the image.
+
 ### File Structure
 
 ```
