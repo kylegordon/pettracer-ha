@@ -54,7 +54,7 @@ This is a Home Assistant custom component that bridges the PetTracer GPS collar 
 
 ## CI Behaviour
 
-- **Tests** (`pytest` job): must pass; enforces ≥80% coverage with `coverage report --fail-under=80`.
+- **Tests** (`pytest` job): must pass; enforces ≥90% coverage with `coverage report --fail-under=90`.
 - **Validate** job: blocks on invalid JSON in `manifest.json`, `strings.json`, `translations/en.json`, `hacs.json`.
 - **Lint** job: `continue-on-error: true` — linting failures do not block CI.
 - Changing the `version` field in `manifest.json` triggers the auto-release workflow (creates a GitHub release and HACS ZIP). Don't bump the version unless you intend a release.
