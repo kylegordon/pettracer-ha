@@ -367,6 +367,53 @@ async def test_sensor_no_details(hass):
     assert device_info["sw_version"] is None
 
 
+async def test_position_time_parse_returns_none(hass, mock_device):
+    """Test position time falls back to raw value when parse_datetime returns None."""
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    mock_device.lastPos.timeMeasure = "not-a-real-datetime"
+
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "position_time")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
+
+    with patch(
+        "custom_components.pettracer.sensor.parse_datetime", return_value=None
+    ):
+        assert sensor.native_value == "not-a-real-datetime"
+
+
+async def test_position_time_parse_exception(hass, mock_device):
+    """Test position time falls back to raw value when parse_datetime raises."""
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    mock_device.lastPos.timeMeasure = "bad-value"
+
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "position_time")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
+
+    with patch(
+        "custom_components.pettracer.sensor.parse_datetime",
+        side_effect=ValueError("unparseable"),
+    ):
+        assert sensor.native_value == "bad-value"
+
+
+async def test_mode_sensor_none_mode(hass, mock_device):
+    """Test mode sensor returns None when device.mode is None."""
+    coordinator = MagicMock()
+
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "mode")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
+
+    mock_device.mode = None
+    coordinator.data = {"devices": [mock_device]}
+
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes == {}
+
+
 async def test_battery_percentage_edge_cases(hass, mock_device):
     """Test battery percentage calculation with edge cases."""
     coordinator = MagicMock()

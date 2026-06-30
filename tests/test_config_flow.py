@@ -218,6 +218,38 @@ async def test_reauth_flow_success(hass, mock_setup_entry):
     assert entry.data[CONF_PASSWORD] == "new_password"
 
 
+async def test_reauth_flow_unknown_exception(hass, mock_setup_entry):
+    """Test reauth flow with unexpected exception."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "test@example.com",
+            CONF_PASSWORD: "old_password",
+        },
+        unique_id="test@example.com",
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = MagicMock()
+        client_instance.login = AsyncMock(side_effect=Exception("Unexpected error"))
+        mock_client.return_value = client_instance
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_PASSWORD: "new_password"},
+        )
+
+    assert result2["type"] == FlowResultType.FORM
+    assert result2["errors"] == {"base": "unknown"}
+
+
 async def test_reauth_flow_invalid_auth(hass, mock_setup_entry):
     """Test reauth flow with invalid credentials."""
     from pytest_homeassistant_custom_component.common import MockConfigEntry
