@@ -132,6 +132,7 @@ async def test_device_tracker_attributes(hass, mock_device):
     
     assert "battery_voltage_mv" in attributes
     assert attributes["battery_voltage_mv"] == 4100
+    assert "last_contact" in attributes
     assert "satellites" in attributes
     assert attributes["satellites"] == 8
     assert "signal_strength" in attributes
@@ -244,6 +245,20 @@ async def test_device_tracker_no_details(hass):
     
     device_info = tracker.device_info
     assert device_info["sw_version"] is None
+
+
+async def test_device_tracker_unavailable(hass, mock_device):
+    """Test device tracker available property when device is removed from coordinator."""
+    from custom_components.pettracer.device_tracker import PetTracerDeviceTracker
+
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    tracker = PetTracerDeviceTracker(coordinator, mock_device)
+    assert tracker.available is True
+
+    coordinator.data = {"devices": []}
+    assert tracker.available is False
 
 
 async def test_device_tracker_partial_attributes(hass):
