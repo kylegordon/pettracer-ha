@@ -62,3 +62,6 @@ home-assistant.log
 home-assistant_v2.db
 *.db-shm
 *.db-wal
+
+# RPI Skill
+.rpi-tracking/
