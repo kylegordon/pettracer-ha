@@ -6,6 +6,10 @@ on:
     name: grumpy
     events: [pull_request_comment, pull_request_review_comment]
 
+engine:
+  id: copilot
+  version: "1.0.80"
+
 permissions:
   contents: read
   pull-requests: read
