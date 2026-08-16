@@ -267,6 +267,7 @@ class PetTracerSensor(CoordinatorEntity, SensorEntity):
     """Representation of a PetTracer sensor."""
 
     entity_description: PetTracerSensorEntityDescription
+    _attr_has_entity_name = True
 
     def __init__(self, coordinator, device, description: PetTracerSensorEntityDescription):
         """Initialize the sensor."""
@@ -274,21 +275,23 @@ class PetTracerSensor(CoordinatorEntity, SensorEntity):
         self.entity_description = description
         self._device = device
         self._device_id = device.id
-        self._device_name = (
-            device.details.name if device.details else f"PetTracer {device.id}"
-        )
         self._attr_unique_id = f"pettracer_{device.id}_{description.key}"
-        self._attr_name = f"{self._device_name} {description.display_name}"
+        self._attr_name = description.display_name
+        self._attr_suggested_object_id = f"pettracer_{device.id}_{description.key}"
 
     @property
     def device_info(self) -> dict[str, Any]:
         """Return device information about this sensor."""
+        device = self._get_device_data() or self._device
+        device_name = (
+            device.details.name if device.details else f"PetTracer {self._device_id}"
+        )
         return {
             "identifiers": {(DOMAIN, self._device_id)},
-            "name": self._device_name,
+            "name": device_name,
             "manufacturer": "PetTracer",
             "model": "GPS Collar",
-            "sw_version": self._device.sw if self._device.sw else None,
+            "sw_version": device.sw if device.sw else None,
         }
 
     def _get_device_data(self):
