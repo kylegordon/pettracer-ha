@@ -114,6 +114,24 @@ async def test_at_home_binary_sensor_device_info(hass, mock_device):
     assert device_info["model"] == "GPS Collar"
 
 
+async def test_at_home_binary_sensor_device_info_reflects_pet_rename(hass, mock_device):
+    """Renaming the pet must update device_info without changing identifiers."""
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    sensor = PetTracerAtHomeBinarySensor(coordinator, mock_device)
+    assert sensor.device_info["name"] == "Fluffy"
+
+    mock_device.details.name = "Buddy"
+    coordinator.data = {"devices": [mock_device]}
+
+    assert sensor.device_info["name"] == "Buddy"
+    # Stable identifiers never move, regardless of the pet's current name.
+    assert sensor.unique_id == "pettracer_12345_at_home"
+    assert sensor._attr_suggested_object_id == "pettracer_12345_at_home"
+    assert sensor.device_info["identifiers"] == {(DOMAIN, 12345)}
+
+
 async def test_charging_binary_sensor_true(hass, mock_device):
     """Test charging binary sensor when collar is charging."""
     coordinator = MagicMock()

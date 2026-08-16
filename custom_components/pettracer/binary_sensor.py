@@ -43,9 +43,6 @@ class PetTracerAtHomeBinarySensor(CoordinatorEntity, BinarySensorEntity):
         super().__init__(coordinator)
         self._device = device
         self._device_id = device.id
-        self._device_name = (
-            device.details.name if device.details else f"PetTracer {device.id}"
-        )
         self._attr_unique_id = f"pettracer_{device.id}_at_home"
         self._attr_name = "At Home"
         self._attr_suggested_object_id = f"pettracer_{device.id}_at_home"
@@ -53,12 +50,16 @@ class PetTracerAtHomeBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def device_info(self) -> dict[str, Any]:
         """Return device information about this sensor."""
+        device = self._get_device_data() or self._device
+        device_name = (
+            device.details.name if device.details else f"PetTracer {self._device_id}"
+        )
         return {
             "identifiers": {(DOMAIN, self._device_id)},
-            "name": self._device_name,
+            "name": device_name,
             "manufacturer": "PetTracer",
             "model": "GPS Collar",
-            "sw_version": self._device.sw if self._device.sw else None,
+            "sw_version": device.sw if device.sw else None,
         }
 
     def _get_device_data(self):
@@ -88,9 +89,6 @@ class PetTracerChargingBinarySensor(CoordinatorEntity, BinarySensorEntity):
         super().__init__(coordinator)
         self._device = device
         self._device_id = device.id
-        self._device_name = (
-            device.details.name if device.details else f"PetTracer {device.id}"
-        )
         self._attr_unique_id = f"pettracer_{device.id}_charging"
         self._attr_name = "Charging"
         self._attr_suggested_object_id = f"pettracer_{device.id}_charging"
@@ -98,12 +96,16 @@ class PetTracerChargingBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def device_info(self) -> dict[str, Any]:
         """Return device information about this sensor."""
+        device = self._get_device_data() or self._device
+        device_name = (
+            device.details.name if device.details else f"PetTracer {self._device_id}"
+        )
         return {
             "identifiers": {(DOMAIN, self._device_id)},
-            "name": self._device_name,
+            "name": device_name,
             "manufacturer": "PetTracer",
             "model": "GPS Collar",
-            "sw_version": self._device.sw if self._device.sw else None,
+            "sw_version": device.sw if device.sw else None,
         }
 
     def _get_device_data(self):

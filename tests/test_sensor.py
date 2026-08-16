@@ -312,6 +312,25 @@ async def test_sensor_device_info(hass, mock_device):
     assert device_info["sw_version"] == 656393
 
 
+async def test_sensor_device_info_reflects_pet_rename(hass, mock_device):
+    """Renaming the pet must update device_info without changing identifiers."""
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [mock_device]}
+
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "battery_level")
+    sensor = PetTracerSensor(coordinator, mock_device, description)
+    assert sensor.device_info["name"] == "Fluffy"
+
+    mock_device.details.name = "Buddy"
+    coordinator.data = {"devices": [mock_device]}
+
+    assert sensor.device_info["name"] == "Buddy"
+    # Stable identifiers never move, regardless of the pet's current name.
+    assert sensor.unique_id == "pettracer_12345_battery_level"
+    assert sensor._attr_suggested_object_id == "pettracer_12345_battery_level"
+    assert sensor.device_info["identifiers"] == {(DOMAIN, 12345)}
+
+
 async def test_sensor_coordinator_update(hass, mock_device):
     """Test sensor updates from coordinator."""
     coordinator = MagicMock()
