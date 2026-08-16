@@ -68,7 +68,9 @@ async def test_battery_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_battery_level"
-    assert sensor.name == "Fluffy Battery Level"
+    assert sensor.name == "Battery Level"
+    assert sensor._attr_has_entity_name is True
+    assert sensor._attr_suggested_object_id == "pettracer_12345_battery_level"
     assert sensor.device_class == SensorDeviceClass.BATTERY
     assert sensor.native_unit_of_measurement == "%"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
@@ -88,7 +90,7 @@ async def test_battery_voltage_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_battery_voltage"
-    assert sensor.name == "Fluffy Battery Voltage"
+    assert sensor.name == "Battery Voltage"
     assert sensor.device_class == SensorDeviceClass.VOLTAGE
     assert sensor.native_unit_of_measurement == "mV"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
@@ -105,7 +107,7 @@ async def test_latitude_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_latitude"
-    assert sensor.name == "Fluffy Latitude"
+    assert sensor.name == "Latitude"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
     assert sensor.native_value == 51.5074
 
@@ -119,7 +121,7 @@ async def test_longitude_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_longitude"
-    assert sensor.name == "Fluffy Longitude"
+    assert sensor.name == "Longitude"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
     assert sensor.native_value == -0.1278
 
@@ -133,7 +135,7 @@ async def test_gps_accuracy_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_gps_accuracy"
-    assert sensor.name == "Fluffy GPS Accuracy"
+    assert sensor.name == "GPS Accuracy"
     assert sensor.device_class == SensorDeviceClass.DISTANCE
     assert sensor.native_unit_of_measurement == "m"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
@@ -152,7 +154,7 @@ async def test_last_contact_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_last_contact"
-    assert sensor.name == "Fluffy Last Contact"
+    assert sensor.name == "Last Contact"
     assert sensor.device_class == SensorDeviceClass.TIMESTAMP
     assert sensor.native_value == datetime(2026, 1, 11, 10, 30, 0)
 
@@ -166,7 +168,7 @@ async def test_satellites_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_satellites"
-    assert sensor.name == "Fluffy Satellites"
+    assert sensor.name == "Satellites"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
     assert sensor.entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.native_value == 8
@@ -181,7 +183,7 @@ async def test_signal_strength_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_signal_strength"
-    assert sensor.name == "Fluffy Signal Strength"
+    assert sensor.name == "Signal Strength"
     assert sensor.device_class == SensorDeviceClass.SIGNAL_STRENGTH
     assert sensor.native_unit_of_measurement == "dBm"
     assert sensor.state_class == SensorStateClass.MEASUREMENT
@@ -198,7 +200,7 @@ async def test_position_time_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_position_time"
-    assert sensor.name == "Fluffy Position Time"
+    assert sensor.name == "Position Time"
     assert sensor.device_class == SensorDeviceClass.TIMESTAMP
     # The value should be parsed from the mock device's timeMeasure
     assert sensor.native_value is not None
@@ -213,7 +215,7 @@ async def test_status_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_status"
-    assert sensor.name == "Fluffy Status"
+    assert sensor.name == "Status"
     assert sensor.entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.native_value == 0
 
@@ -227,7 +229,7 @@ async def test_mode_sensor(hass, mock_device):
     sensor = PetTracerSensor(coordinator, mock_device, description)
 
     assert sensor.unique_id == "pettracer_12345_mode"
-    assert sensor.name == "Fluffy Mode"
+    assert sensor.name == "Mode"
     assert sensor.native_value == "Fast"
     assert sensor.extra_state_attributes == {"mode_number": 1}
 
@@ -340,8 +342,13 @@ async def test_multiple_devices_sensors(hass, mock_device, mock_device_no_positi
 
     assert sensor1.unique_id == "pettracer_12345_battery_level"
     assert sensor2.unique_id == "pettracer_12346_battery_level"
-    assert sensor1.name == "Fluffy Battery Level"
-    assert sensor2.name == "Rex Battery Level"
+    # Entity name is identical across pets; the pet's name lives on the device,
+    # not the entity, so renaming a pet can't affect this.
+    assert sensor1.name == "Battery Level"
+    assert sensor2.name == "Battery Level"
+    # The suggested entity_id slug is keyed on device.id, not the pet's name.
+    assert sensor1._attr_suggested_object_id == "pettracer_12345_battery_level"
+    assert sensor2._attr_suggested_object_id == "pettracer_12346_battery_level"
 
 
 async def test_sensor_no_details(hass):
@@ -360,7 +367,8 @@ async def test_sensor_no_details(hass):
     sensor = PetTracerSensor(coordinator, device, description)
 
     assert sensor.unique_id == "pettracer_99999_battery_level"
-    assert sensor.name == "PetTracer 99999 Battery Level"
+    assert sensor.name == "Battery Level"
+    assert sensor._attr_suggested_object_id == "pettracer_99999_battery_level"
     assert sensor.native_value is None
 
     device_info = sensor.device_info

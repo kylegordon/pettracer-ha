@@ -64,7 +64,9 @@ async def test_at_home_binary_sensor_true(hass, mock_device):
     sensor = PetTracerAtHomeBinarySensor(coordinator, mock_device)
 
     assert sensor.unique_id == "pettracer_12345_at_home"
-    assert sensor.name == "Fluffy At Home"
+    assert sensor.name == "At Home"
+    assert sensor._attr_has_entity_name is True
+    assert sensor._attr_suggested_object_id == "pettracer_12345_at_home"
     assert sensor.device_class == BinarySensorDeviceClass.PRESENCE
     assert sensor.is_on is True
 
@@ -77,7 +79,8 @@ async def test_at_home_binary_sensor_false(hass, mock_device_no_position):
     sensor = PetTracerAtHomeBinarySensor(coordinator, mock_device_no_position)
 
     assert sensor.unique_id == "pettracer_12346_at_home"
-    assert sensor.name == "Rex At Home"
+    assert sensor.name == "At Home"
+    assert sensor._attr_suggested_object_id == "pettracer_12346_at_home"
     assert sensor.is_on is False
 
 
@@ -119,7 +122,8 @@ async def test_charging_binary_sensor_true(hass, mock_device):
     sensor = PetTracerChargingBinarySensor(coordinator, mock_device)
 
     assert sensor.unique_id == "pettracer_12345_charging"
-    assert sensor.name == "Fluffy Charging"
+    assert sensor.name == "Charging"
+    assert sensor._attr_suggested_object_id == "pettracer_12345_charging"
     assert sensor.device_class == BinarySensorDeviceClass.BATTERY_CHARGING
     assert sensor.is_on is True
 
@@ -132,7 +136,8 @@ async def test_charging_binary_sensor_false(hass, mock_device_no_position):
     sensor = PetTracerChargingBinarySensor(coordinator, mock_device_no_position)
 
     assert sensor.unique_id == "pettracer_12346_charging"
-    assert sensor.name == "Rex Charging"
+    assert sensor.name == "Charging"
+    assert sensor._attr_suggested_object_id == "pettracer_12346_charging"
     assert sensor.is_on is False
 
 

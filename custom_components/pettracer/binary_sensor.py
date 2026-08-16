@@ -36,6 +36,7 @@ class PetTracerAtHomeBinarySensor(CoordinatorEntity, BinarySensorEntity):
     """Representation of a PetTracer at home binary sensor."""
 
     _attr_device_class = BinarySensorDeviceClass.PRESENCE
+    _attr_has_entity_name = True
 
     def __init__(self, coordinator, device):
         """Initialize the binary sensor."""
@@ -46,7 +47,8 @@ class PetTracerAtHomeBinarySensor(CoordinatorEntity, BinarySensorEntity):
             device.details.name if device.details else f"PetTracer {device.id}"
         )
         self._attr_unique_id = f"pettracer_{device.id}_at_home"
-        self._attr_name = f"{self._device_name} At Home"
+        self._attr_name = "At Home"
+        self._attr_suggested_object_id = f"pettracer_{device.id}_at_home"
 
     @property
     def device_info(self) -> dict[str, Any]:
@@ -79,6 +81,7 @@ class PetTracerChargingBinarySensor(CoordinatorEntity, BinarySensorEntity):
     """Representation of a PetTracer charging binary sensor."""
 
     _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
+    _attr_has_entity_name = True
 
     def __init__(self, coordinator, device):
         """Initialize the binary sensor."""
@@ -89,7 +92,8 @@ class PetTracerChargingBinarySensor(CoordinatorEntity, BinarySensorEntity):
             device.details.name if device.details else f"PetTracer {device.id}"
         )
         self._attr_unique_id = f"pettracer_{device.id}_charging"
-        self._attr_name = f"{self._device_name} Charging"
+        self._attr_name = "Charging"
+        self._attr_suggested_object_id = f"pettracer_{device.id}_charging"
 
     @property
     def device_info(self) -> dict[str, Any]:

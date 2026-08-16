@@ -33,15 +33,19 @@ async def async_setup_entry(
 class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
     """Representation of a PetTracer device tracker."""
 
+    _attr_has_entity_name = True
+    _attr_name = None
+
     def __init__(self, coordinator, device):
         """Initialize the tracker."""
         super().__init__(coordinator)
         self._device = device
         self._device_id = device.id
-        self._attr_unique_id = f"pettracer_{device.id}"
-        self._attr_name = (
+        self._device_name = (
             device.details.name if device.details else f"PetTracer {device.id}"
         )
+        self._attr_unique_id = f"pettracer_{device.id}"
+        self._attr_suggested_object_id = f"pettracer_{device.id}"
 
     def _get_device_data(self):
         """Get updated device data from coordinator."""
@@ -55,7 +59,7 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Return device information about this tracker."""
         return {
             "identifiers": {(DOMAIN, self._device.id)},
-            "name": self._attr_name,
+            "name": self._device_name,
             "manufacturer": "PetTracer",
             "model": "GPS Collar",
             "sw_version": self._device.sw if self._device.sw else None,

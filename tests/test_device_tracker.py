@@ -64,7 +64,12 @@ async def test_device_tracker_properties(hass, mock_device):
     tracker = PetTracerDeviceTracker(coordinator, mock_device)
     
     assert tracker.unique_id == "pettracer_12345"
-    assert tracker.name == "Fluffy"
+    # name is None so has_entity_name composes the friendly name from the
+    # device name alone (the pet's name), rather than baking it into the entity.
+    assert tracker.name is None
+    assert tracker._attr_has_entity_name is True
+    assert tracker._device_name == "Fluffy"
+    assert tracker._attr_suggested_object_id == "pettracer_12345"
     assert tracker.source_type == SourceType.GPS
     assert tracker.latitude == 51.5074
     assert tracker.longitude == -0.1278
@@ -114,7 +119,8 @@ async def test_device_tracker_no_position(hass, mock_device_no_position):
     tracker = PetTracerDeviceTracker(coordinator, mock_device_no_position)
     
     assert tracker.unique_id == "pettracer_12346"
-    assert tracker.name == "Rex"
+    assert tracker.name is None
+    assert tracker._device_name == "Rex"
     assert tracker.latitude is None
     assert tracker.longitude is None
     assert tracker.location_accuracy == 0
@@ -192,8 +198,8 @@ async def test_device_tracker_multiple_devices(hass, mock_device, mock_device_no
     
     assert tracker1.unique_id == "pettracer_12345"
     assert tracker2.unique_id == "pettracer_12346"
-    assert tracker1.name == "Fluffy"
-    assert tracker2.name == "Rex"
+    assert tracker1._device_name == "Fluffy"
+    assert tracker2._device_name == "Rex"
     assert tracker1.latitude == 51.5074
     assert tracker2.latitude is None
 
@@ -238,7 +244,9 @@ async def test_device_tracker_no_details(hass):
     tracker = PetTracerDeviceTracker(coordinator, device)
     
     assert tracker.unique_id == "pettracer_99999"
-    assert tracker.name == "PetTracer 99999"
+    assert tracker.name is None
+    assert tracker._device_name == "PetTracer 99999"
+    assert tracker._attr_suggested_object_id == "pettracer_99999"
     assert tracker.latitude is None
     assert tracker.longitude is None
     assert tracker.battery_level is None
