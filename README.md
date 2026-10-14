@@ -28,7 +28,11 @@ This integration uses the [petTracer-API](https://github.com/AmbientArchitect/pe
 
 ### HACS (Recommended)
 
-This integration can be installed via HACS as a **custom repository**.
+This integration can be installed via HACS as a **custom repository**. With [My Home Assistant](https://my.home-assistant.io/) set up, click this button to open it in HACS:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=kylegordon&repository=pettracer-ha&category=integration)
+
+Then click "Download" and restart Home Assistant. Or add it by hand:
 
 1. **Add and install this repository in HACS:**
    - Open HACS in Home Assistant
