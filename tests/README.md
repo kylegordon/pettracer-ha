@@ -38,8 +38,8 @@ pytest tests/test_config_flow.py::test_form_user_success -v
 
 ### `conftest.py`
 Shared fixtures for all tests including:
-- Mock PetTracerClient instances
-- Mock device data
+- PetTracerClient mocks autospecced from the real class
+- Real `Device` objects built with the library's `Device.from_dict()`
 - Config entry data
 - Setup entry mocks
 
