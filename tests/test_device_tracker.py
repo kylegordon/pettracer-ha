@@ -1,11 +1,10 @@
 """Tests for the PetTracer device tracker platform."""
 from unittest.mock import MagicMock, patch
 
-import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
 from homeassistant.components.device_tracker import SourceType
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from pettracer.types import Device
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.pettracer.const import DOMAIN
 
@@ -32,7 +31,9 @@ async def test_device_tracker_setup(hass, mock_pettracer_client_init, mock_devic
         mock_client.return_value = mock_pettracer_client_init
         
         from custom_components.pettracer import async_setup_entry
-        from custom_components.pettracer.device_tracker import async_setup_entry as tracker_setup
+        from custom_components.pettracer.device_tracker import (
+            async_setup_entry as tracker_setup,
+        )
         
         # Setup integration
         with patch(
@@ -247,16 +248,13 @@ async def test_device_tracker_device_info_reflects_pet_rename(hass, mock_device)
     assert tracker.device_info["identifiers"] == {(DOMAIN, 12345)}
 
 
-async def test_device_tracker_no_details(hass):
+async def test_device_tracker_no_details(hass, device_payload):
     """Test device tracker when device has no details."""
     from custom_components.pettracer.device_tracker import PetTracerDeviceTracker
-    
-    device = MagicMock()
-    device.id = 99999
-    device.details = None
-    device.bat = None
-    device.lastPos = None
-    device.sw = None
+
+    device = Device.from_dict(
+        device_payload(id=99999, details=None, bat=None, lastPos=None, sw=None)
+    )
     
     coordinator = MagicMock()
     coordinator.data = {"devices": [device]}
@@ -289,29 +287,30 @@ async def test_device_tracker_unavailable(hass, mock_device):
     assert tracker.available is False
 
 
-async def test_device_tracker_partial_attributes(hass):
+async def test_device_tracker_partial_attributes(hass, device_payload):
     """Test device tracker with partial attribute data."""
     from custom_components.pettracer.device_tracker import PetTracerDeviceTracker
-    
-    device = MagicMock()
-    device.id = 88888
-    device.bat = 4000
-    device.status = None
-    device.mode = None
-    device.home = None
-    device.sw = None
-    device.lastContact = None
-    
-    device.details = MagicMock()
-    device.details.name = "Partial"
-    
-    device.lastPos = MagicMock()
-    device.lastPos.posLat = 50.0
-    device.lastPos.posLong = -1.0
-    device.lastPos.acc = 15
-    device.lastPos.sat = None
-    device.lastPos.rssi = None
-    device.lastPos.timeMeasure = None
+
+    device = Device.from_dict(
+        device_payload(
+            id=88888,
+            bat=4000,
+            status=None,
+            mode=None,
+            home=None,
+            sw=None,
+            lastContact=None,
+            details={"id": 88888, "name": "Partial"},
+            lastPos={
+                "posLat": 50.0,
+                "posLong": -1.0,
+                "acc": 15,
+                "sat": None,
+                "rssi": None,
+                "timeMeasure": None,
+            },
+        )
+    )
     
     coordinator = MagicMock()
     coordinator.data = {"devices": [device]}

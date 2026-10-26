@@ -9,8 +9,8 @@ This is a **Home Assistant custom integration** for PetTracer GPS pet collars. I
 - **Language:** Python 3.12+
 - **Framework:** Home Assistant 2023.1+
 - **Dependencies:** pettracer-client from PyPI, pinned only in `manifest.json` (Renovate opens bump PRs; CI installs the pinned version from there)
-- **Size:** 5 Python source files, 7 test files, 47 unit tests
-- **Test Coverage:** 96% (minimum required: 80%)
+- **Size:** 5 Python source files, 7 test files
+- **Test Coverage:** minimum required: 90%
 - **Lines of Code:** ~734 lines in source, comprehensive test suite
 
 ## Project Structure
@@ -50,11 +50,9 @@ pettracer-ha/
 **ALWAYS run these commands in sequence before testing:**
 
 ```bash
-# 1. Install test dependencies (REQUIRED - takes ~60 seconds)
-pip install -r requirements-test.txt
-
-# 2. Install runtime dependencies (REQUIRED)
-pip install pettracer-client homeassistant
+# Install test deps and pettracer-client at the version pinned in manifest.json
+# (REQUIRED - takes ~60 seconds)
+pip install -r requirements-test.txt $(jq -r '.requirements[]' custom_components/pettracer/manifest.json)
 ```
 
 **Important:** The `pytest-homeassistant-custom-component` package automatically installs Home Assistant. Do NOT install homeassistant separately unless already done.
@@ -68,8 +66,8 @@ pytest --cov=custom_components.pettracer --cov-report=term -v
 ```
 
 **Expected result:**
-- All 47 tests pass
-- Coverage ≥80% (currently 96%)
+- All tests pass
+- Coverage ≥90%
 - Test runtime: ~2 seconds
 
 **Run specific test file:**
@@ -124,11 +122,11 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 **3 Jobs:**
 
 1. **test** - Run test suite
-   - Python 3.x (uses latest 3.12)
-   - Installs: requirements-test.txt + pettracer-client + homeassistant
+   - Python 3.14
+   - Installs: requirements-test.txt + pettracer-client at the version pinned in manifest.json
    - Runs: `pytest --cov=custom_components.pettracer --cov-report=xml --cov-report=term -v`
    - Uploads coverage to Codecov
-   - **Enforces minimum 80% coverage** with `coverage report --fail-under=80`
+   - **Enforces minimum 90% coverage** with `coverage report --fail-under=90`
    - **This job MUST pass**
 
 2. **lint** - Code quality (NON-BLOCKING)
@@ -173,7 +171,7 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
    ruff format --check custom_components/pettracer/
    ```
 6. **Update tests** if you changed functionality
-7. **Verify coverage** stays ≥80%
+7. **Verify coverage** stays ≥90%
 
 ### Common File Edit Patterns
 
@@ -198,16 +196,17 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 ### Test Development
 
 **Test fixtures** are in `tests/conftest.py`:
-- `mock_pettracer_client` - Mock API client
-- `mock_device` - Mock device with full data
-- `mock_device_no_position` - Mock device without GPS data
+- `mock_pettracer_client_init` - API client autospecced from the real `PetTracerClient` (config-flow tests autospec it inline)
+- `mock_device` - real `pettracer.types.Device` built with `Device.from_dict()` from a realistic payload
+- `mock_device_no_position` - same, with `lastPos` set to None
+- `device_payload` - the payload builder, for tests that need a variant device
 - All tests use pytest-homeassistant-custom-component fixtures
 
 **Test patterns:**
 - Use `@pytest.mark.asyncio` for async tests (auto-enabled via pyproject.toml)
 - Mock the PetTracerClient from pettracer library
 - Use HomeAssistant test fixtures from pytest-homeassistant-custom-component
-- Coverage requirement: 80% minimum, currently at 96%
+- Coverage requirement: 90% minimum
 
 ## Key Architecture Details
 
@@ -242,12 +241,12 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 ## Troubleshooting Common Issues
 
 ### Tests fail with "ModuleNotFoundError: pettracer"
-**Solution:** Run `pip install pettracer-client`
+**Solution:** Install the pinned client: `pip install $(jq -r '.requirements[]' custom_components/pettracer/manifest.json)`
 
 ### Tests fail with Home Assistant import errors
 **Solution:** Run `pip install -r requirements-test.txt` (includes pytest-homeassistant-custom-component which installs Home Assistant)
 
-### Coverage drops below 80%
+### Coverage drops below 90%
 **Solution:** Add tests for new code or remove untested code paths
 
 ### JSON validation fails
@@ -263,7 +262,7 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 
 1. **ALWAYS run tests before committing** - Takes only 2 seconds
 2. **Never break JSON files** - Validate after every edit to manifest.json
-3. **Maintain ≥80% coverage** - CI will fail below this threshold
+3. **Maintain ≥90% coverage** - CI will fail below this threshold
 4. **Don't change version in manifest.json** unless making a release (triggers auto-release)
 5. **Follow Home Assistant patterns** - Use DataUpdateCoordinator, proper device classes
 6. **Mock external dependencies** - Never call real PetTracer API in tests
@@ -284,16 +283,16 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 **Format command:** `ruff format custom_components/pettracer/`
 **Validate JSON:** `python -c "import json; json.load(open('custom_components/pettracer/manifest.json'))"`
 
-**Dependencies to install:** `pip install -r requirements-test.txt && pip install pettracer-client homeassistant`
+**Dependencies to install:** `pip install -r requirements-test.txt $(jq -r '.requirements[]' custom_components/pettracer/manifest.json)`
 
 **CI passes when:**
-- All 47 tests pass
-- Coverage ≥80%
+- All tests pass
+- Coverage ≥90%
 - All JSON files are valid
 - (Linting failures are non-blocking)
 
 ## Final Notes
 
-This repository follows Home Assistant custom component standards and is HACS-compatible. Changes should maintain compatibility with Home Assistant 2023.1+ and follow the existing patterns for coordinators, entities, and config flows. The test suite is comprehensive (96% coverage) and should be maintained at that level.
+This repository follows Home Assistant custom component standards and is HACS-compatible. Changes should maintain compatibility with Home Assistant 2023.1+ and follow the existing patterns for coordinators, entities, and config flows. Keep coverage at or above the 90% CI threshold.
 
 **Trust these instructions.** Only search for additional information if something is unclear, incorrect, or if you're adding new functionality not covered here.

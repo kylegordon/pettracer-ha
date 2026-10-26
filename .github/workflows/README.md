@@ -10,10 +10,10 @@ Runs on every push and pull request to master, main, or dev branches.
 **Jobs:**
 
 1. **Test** - Runs the test suite
-   - Tests against Python 3.11 and 3.12
+   - Tests on Python 3.14, with pettracer-client installed at the version pinned in manifest.json
    - Runs pytest with coverage
    - Uploads coverage to Codecov
-   - Enforces minimum 80% coverage
+   - Enforces minimum 90% coverage
 
 2. **Lint** - Code quality checks
    - Runs `ruff` linter

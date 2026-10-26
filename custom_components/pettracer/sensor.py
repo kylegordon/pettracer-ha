@@ -25,7 +25,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.util.dt import parse_datetime
 
 from .const import (
     DOMAIN,
@@ -105,12 +104,6 @@ def _get_signal_strength(device: Any) -> int | None:
 def _get_position_time(device: Any) -> datetime | None:
     """Get position time."""
     if device and device.lastPos and device.lastPos.timeMeasure:
-        try:
-            dt = parse_datetime(device.lastPos.timeMeasure)
-            if dt:
-                return dt
-        except (ValueError, TypeError):
-            pass
         return device.lastPos.timeMeasure
     return None
 

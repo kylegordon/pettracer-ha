@@ -2,17 +2,17 @@
 
 from unittest.mock import MagicMock, patch
 
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from pettracer.types import Device
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.config_entries import ConfigEntryState
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
-
-from custom_components.pettracer.const import DOMAIN
 from custom_components.pettracer.binary_sensor import (
     PetTracerAtHomeBinarySensor,
     PetTracerChargingBinarySensor,
 )
+from custom_components.pettracer.const import DOMAIN
 
 
 async def test_binary_sensor_setup(hass, mock_pettracer_client_init, mock_device):
@@ -84,13 +84,11 @@ async def test_at_home_binary_sensor_false(hass, mock_device_no_position):
     assert sensor.is_on is False
 
 
-async def test_at_home_binary_sensor_none(hass):
+async def test_at_home_binary_sensor_none(hass, device_payload):
     """Test at home binary sensor when home status is None."""
-    device = MagicMock()
-    device.id = 99999
-    device.details = None
-    device.home = None
-    device.sw = None
+    device = Device.from_dict(
+        device_payload(id=99999, details=None, home=None, sw=None)
+    )
 
     coordinator = MagicMock()
     coordinator.data = {"devices": [device]}
@@ -159,13 +157,11 @@ async def test_charging_binary_sensor_false(hass, mock_device_no_position):
     assert sensor.is_on is False
 
 
-async def test_charging_binary_sensor_none(hass):
+async def test_charging_binary_sensor_none(hass, device_payload):
     """Test charging binary sensor when chg is None."""
-    device = MagicMock()
-    device.id = 99999
-    device.details = None
-    device.chg = None
-    device.sw = None
+    device = Device.from_dict(
+        device_payload(id=99999, details=None, chg=None, sw=None)
+    )
 
     coordinator = MagicMock()
     coordinator.data = {"devices": [device]}
