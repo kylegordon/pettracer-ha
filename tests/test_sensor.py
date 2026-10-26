@@ -1,15 +1,16 @@
 """Tests for the PetTracer sensor platform."""
 
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EntityCategory
-from homeassistant.config_entries import ConfigEntryState
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, EntityCategory
+from pettracer.types import Device
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.pettracer.const import DOMAIN
 from custom_components.pettracer.sensor import (
@@ -145,8 +146,6 @@ async def test_gps_accuracy_sensor(hass, mock_device):
 
 async def test_last_contact_sensor(hass, mock_device):
     """Test last contact sensor."""
-    from datetime import datetime
-
     coordinator = MagicMock()
     coordinator.data = {"devices": [mock_device]}
 
@@ -156,7 +155,7 @@ async def test_last_contact_sensor(hass, mock_device):
     assert sensor.unique_id == "pettracer_12345_last_contact"
     assert sensor.name == "Last Contact"
     assert sensor.device_class == SensorDeviceClass.TIMESTAMP
-    assert sensor.native_value == datetime(2026, 1, 11, 10, 30, 0)
+    assert sensor.native_value == datetime(2026, 1, 11, 10, 30, 0, tzinfo=UTC)
 
 
 async def test_satellites_sensor(hass, mock_device):
@@ -202,8 +201,7 @@ async def test_position_time_sensor(hass, mock_device):
     assert sensor.unique_id == "pettracer_12345_position_time"
     assert sensor.name == "Position Time"
     assert sensor.device_class == SensorDeviceClass.TIMESTAMP
-    # The value should be parsed from the mock device's timeMeasure
-    assert sensor.native_value is not None
+    assert sensor.native_value == datetime(2026, 1, 11, 10, 30, 0, tzinfo=UTC)
 
 
 async def test_status_sensor(hass, mock_device):
@@ -237,13 +235,13 @@ async def test_mode_sensor(hass, mock_device):
 async def test_mode_sensor_all_modes(hass, mock_device):
     """Test mode sensor with all valid mode values."""
     from custom_components.pettracer.const import (
-        MODE_LIVE,
-        MODE_FAST_PLUS,
         MODE_FAST,
-        MODE_NORMAL_PLUS,
+        MODE_FAST_PLUS,
+        MODE_LIVE,
         MODE_NORMAL,
-        MODE_SLOW_PLUS,
+        MODE_NORMAL_PLUS,
         MODE_SLOW,
+        MODE_SLOW_PLUS,
     )
 
     coordinator = MagicMock()
@@ -370,14 +368,11 @@ async def test_multiple_devices_sensors(hass, mock_device, mock_device_no_positi
     assert sensor2._attr_suggested_object_id == "pettracer_12346_battery_level"
 
 
-async def test_sensor_no_details(hass):
+async def test_sensor_no_details(hass, device_payload):
     """Test sensor when device has no details."""
-    device = MagicMock()
-    device.id = 99999
-    device.details = None
-    device.bat = None
-    device.lastPos = None
-    device.sw = None
+    device = Device.from_dict(
+        device_payload(id=99999, details=None, bat=None, lastPos=None, sw=None)
+    )
 
     coordinator = MagicMock()
     coordinator.data = {"devices": [device]}
@@ -394,37 +389,19 @@ async def test_sensor_no_details(hass):
     assert device_info["sw_version"] is None
 
 
-async def test_position_time_parse_returns_none(hass, mock_device):
-    """Test position time falls back to raw value when parse_datetime returns None."""
-    coordinator = MagicMock()
-    coordinator.data = {"devices": [mock_device]}
+async def test_position_time_unparseable(hass, device_payload):
+    """Test position time is None when the library can't parse timeMeasure."""
+    payload = device_payload()
+    payload["lastPos"]["timeMeasure"] = "not-a-real-datetime"
+    device = Device.from_dict(payload)
 
-    mock_device.lastPos.timeMeasure = "not-a-real-datetime"
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [device]}
 
     description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "position_time")
-    sensor = PetTracerSensor(coordinator, mock_device, description)
+    sensor = PetTracerSensor(coordinator, device, description)
 
-    with patch(
-        "custom_components.pettracer.sensor.parse_datetime", return_value=None
-    ):
-        assert sensor.native_value == "not-a-real-datetime"
-
-
-async def test_position_time_parse_exception(hass, mock_device):
-    """Test position time falls back to raw value when parse_datetime raises."""
-    coordinator = MagicMock()
-    coordinator.data = {"devices": [mock_device]}
-
-    mock_device.lastPos.timeMeasure = "bad-value"
-
-    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "position_time")
-    sensor = PetTracerSensor(coordinator, mock_device, description)
-
-    with patch(
-        "custom_components.pettracer.sensor.parse_datetime",
-        side_effect=ValueError("unparseable"),
-    ):
-        assert sensor.native_value == "bad-value"
+    assert sensor.native_value is None
 
 
 async def test_mode_sensor_none_mode(hass, mock_device):

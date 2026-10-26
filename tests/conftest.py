@@ -1,12 +1,10 @@
 """Fixtures for PetTracer tests."""
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
+from unittest.mock import AsyncMock, create_autospec, patch
 
 import pytest
-
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-
-from custom_components.pettracer.const import DOMAIN
+from pettracer import PetTracerClient
+from pettracer.types import Device
 
 # This fixture enables loading custom integrations in pytest tests
 pytest_plugins = "pytest_homeassistant_custom_component"
@@ -27,82 +25,116 @@ def mock_setup_entry() -> AsyncMock:
         yield mock_setup
 
 
+def _device_payload(**overrides):
+    """Return a device record shaped like the PetTracer getccs API response."""
+    payload = {
+        "id": 12345,
+        "accuWarn": 3810,
+        "safetyZone": False,
+        "hw": 656643,
+        "sw": 656393,
+        "bl": 656386,
+        "bat": 4100,
+        "chg": 1,
+        "userId": 15979,
+        "masterHs": {
+            "id": 10775,
+            "posLat": 51.5074,
+            "posLong": -0.1278,
+            "hw": 656384,
+            "sw": 656388,
+            "bl": 656385,
+            "bat": 0,
+            "userId": None,
+            "status": 0,
+            "lastContact": "2026-01-11T10:30:00.000+0000",
+            "devMode": False,
+        },
+        "mode": 1,
+        "modeSet": 1,
+        "status": 0,
+        "search": False,
+        "lastTlgNr": -42,
+        "lastContact": "2026-01-11T10:30:00.000+0000",
+        "lastPos": {
+            "id": 110294833,
+            "posLat": 51.5074,
+            "posLong": -0.1278,
+            "fixS": 3,
+            "fixP": 2,
+            "horiPrec": 12,
+            "sat": 8,
+            "rssi": -65,
+            "acc": 10,
+            "flags": 32,
+            "timeMeasure": "2026-01-11T10:30:00.000+0000",
+            "timeDb": "2026-01-11T10:30:05.000+0000",
+        },
+        "devMode": False,
+        "details": {
+            "id": 12345,
+            "image": None,
+            "img": "img1570960283064022523",
+            "color": 255,
+            "birth": "2018-07-15T23:00:00.000+0000",
+            "name": "Fluffy",
+        },
+        "led": False,
+        "ble": False,
+        "buz": False,
+        "lastRssi": -30,
+        "flags": 2,
+        "searchModeDuration": -1,
+        "masterStatus": "ACTIVE",
+        "home": True,
+        "homeSince": "2026-01-11T09:00:00.000+0000",
+        "owner": True,
+        "fiFo": [],
+    }
+    payload.update(overrides)
+    return payload
+
+
 @pytest.fixture
-def mock_pettracer_client():
-    """Mock PetTracerClient."""
-    with patch("custom_components.pettracer.config_flow.PetTracerClient") as mock_client:
-        client_instance = MagicMock()
-        client_instance.login = AsyncMock()
-        client_instance.is_authenticated = True
-        client_instance.token = "test-token"
-        client_instance.user_name = "Test User"
-        mock_client.return_value = client_instance
-        yield mock_client
+def device_payload():
+    """Return the payload builder, for tests that need a variant device."""
+    return _device_payload
+
+
+def _mock_client_instance():
+    """Return a PetTracerClient mock that rejects methods the library lacks."""
+    return create_autospec(PetTracerClient, instance=True)
 
 
 @pytest.fixture
 def mock_pettracer_client_init():
     """Mock PetTracerClient for __init__.py."""
     with patch("custom_components.pettracer.PetTracerClient") as mock_client:
-        client_instance = MagicMock()
-        client_instance.login = AsyncMock()
-        client_instance.is_authenticated = True
-        client_instance.token = "test-token"
-        client_instance.get_all_devices = AsyncMock()
+        client_instance = _mock_client_instance()
         mock_client.return_value = client_instance
         yield client_instance
 
 
 @pytest.fixture
 def mock_device():
-    """Create a mock PetTracer device."""
-    device = MagicMock()
-    device.id = 12345
-    device.bat = 4100
-    device.status = 0
-    device.mode = 1
-    device.home = True
-    device.chg = 1
-    device.sw = 656393
-    device.lastContact = datetime(2026, 1, 11, 10, 30, 0)
-    
-    # Device details
-    device.details = MagicMock()
-    device.details.name = "Fluffy"
-    
-    # Last position
-    device.lastPos = MagicMock()
-    device.lastPos.posLat = 51.5074
-    device.lastPos.posLong = -0.1278
-    device.lastPos.acc = 10
-    device.lastPos.sat = 8
-    device.lastPos.rssi = -65
-    device.lastPos.timeMeasure = "2026-01-11T10:30:00.000+0000"
-    
-    return device
+    """Create a PetTracer device using the library's own parser."""
+    return Device.from_dict(_device_payload())
 
 
 @pytest.fixture
 def mock_device_no_position():
-    """Create a mock PetTracer device without position data."""
-    device = MagicMock()
-    device.id = 12346
-    device.bat = 3800
-    device.status = 0
-    device.mode = 1
-    device.home = False
-    device.chg = 0
-    device.sw = 656393
-    device.lastContact = datetime(2026, 1, 11, 10, 0, 0)
-    
-    # Device details
-    device.details = MagicMock()
-    device.details.name = "Rex"
-    
-    # No position
-    device.lastPos = None
-    
-    return device
+    """Create a PetTracer device without position data."""
+    return Device.from_dict(
+        _device_payload(
+            id=12346,
+            bat=3800,
+            chg=0,
+            home=False,
+            lastContact="2026-01-11T10:00:00.000+0000",
+            lastPos=None,
+            details={"id": 12346, "name": "Rex"},
+        )
+    )
 
 
 @pytest.fixture

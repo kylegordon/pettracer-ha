@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 All development runs inside Docker — do not install dependencies directly on the host.
 
-Build the dev image (required once, and after `requirements-test.txt` changes):
+Build the dev image (required once, and after `requirements-test.txt` or the `manifest.json` requirements change; it installs `pettracer-client` at the manifest's pinned version):
 ```bash
 docker build -f Dockerfile.dev -t pettracer-dev .
 ```
@@ -51,6 +51,8 @@ This is a Home Assistant custom component that bridges the PetTracer GPS collar 
 **Data flow:** The coordinator calls `client.get_all_devices()` every 60 seconds. Each platform's `async_setup_entry` iterates `coordinator.data["devices"]` and creates entities. Entities extend `CoordinatorEntity` and call `_get_device_data()` to look up their specific device by `device.id` from the coordinator's latest data.
 
 **Sensor pattern:** `sensor.py` uses `PetTracerSensorEntityDescription` (a frozen dataclass extending `SensorEntityDescription`) with a `value_fn: Callable[[device], Any]` field. Adding a new sensor means writing a `_get_*` function and adding an entry to `SENSOR_DESCRIPTIONS` — no new class needed.
+
+**Test fixtures:** `tests/conftest.py` builds `mock_device` / `mock_device_no_position` with the library's own `Device.from_dict()` from a realistic API payload (`device_payload` fixture for variants), and the client fixtures use `create_autospec(PetTracerClient, instance=True)`. Keep it that way: plain `MagicMock` devices hide library field renames, so a dependency bump would pass CI while breaking entities.
 
 **Binary sensors:** `binary_sensor.py` has two concrete classes (`PetTracerAtHomeBinarySensor`, `PetTracerChargingBinarySensor`). These follow the same `CoordinatorEntity` + `_get_device_data()` pattern but are explicit classes rather than description-driven.
 

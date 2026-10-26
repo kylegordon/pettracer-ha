@@ -25,7 +25,7 @@ pettracer-ha/
 
 ### `manifest.json`
 - Defines integration metadata
-- Specifies dependency on `pettracer-client>=0.1.0` PyPI package
+- Pins the exact `pettracer-client` version (the only place it is pinned; CI and `Dockerfile.dev` install from here)
 - Enables config flow UI
 - Sets cloud polling as IoT class
 
