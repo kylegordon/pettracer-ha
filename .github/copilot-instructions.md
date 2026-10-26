@@ -8,7 +8,7 @@ This is a **Home Assistant custom integration** for PetTracer GPS pet collars. I
 - **Type:** Home Assistant custom component (HACS-compatible)
 - **Language:** Python 3.12+
 - **Framework:** Home Assistant 2023.1+
-- **Dependencies:** pettracer-client>=0.1.0 (from PyPI)
+- **Dependencies:** pettracer-client from PyPI, pinned only in `manifest.json` (Renovate opens bump PRs; CI installs the pinned version from there)
 - **Size:** 5 Python source files, 7 test files, 47 unit tests
 - **Test Coverage:** 96% (minimum required: 80%)
 - **Lines of Code:** ~734 lines in source, comprehensive test suite

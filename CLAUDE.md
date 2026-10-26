@@ -44,6 +44,8 @@ docker run --rm -it -v "$PWD":/workspace pettracer-dev bash
 
 This is a Home Assistant custom component that bridges the PetTracer GPS collar cloud API to HA entities. The external `pettracer-client` PyPI package handles all API communication.
 
+**Dependency pin:** `pettracer-client` is pinned only in `manifest.json` `requirements`. Renovate (`renovate.json`, `homeassistant-manifest` manager only) opens PRs for new PyPI versions; Dependabot still handles GitHub Actions and `requirements-test.txt`. The CI test job installs the client version straight from `manifest.json`, so never hard-code it elsewhere.
+
 **Setup flow:** `config_flow.py` collects credentials → `__init__.py` authenticates and creates a `PetTracerDataUpdateCoordinator` → coordinator is stored in `hass.data[DOMAIN][entry_id]` → three platforms (`binary_sensor`, `device_tracker`, `sensor`) each pull the coordinator from `hass.data` and register entities per device.
 
 **Data flow:** The coordinator calls `client.get_all_devices()` every 60 seconds. Each platform's `async_setup_entry` iterates `coordinator.data["devices"]` and creates entities. Entities extend `CoordinatorEntity` and call `_get_device_data()` to look up their specific device by `device.id` from the coordinator's latest data.
