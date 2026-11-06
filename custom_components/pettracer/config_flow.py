@@ -13,6 +13,7 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.data_entry_flow import FlowResult
 
 from .const import DOMAIN
+from .utils import is_auth_error
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,6 +23,14 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_PASSWORD): str,
     }
 )
+
+
+def _login_error(err: PetTracerError) -> str:
+    """Map a login failure to a form error key, logging outages."""
+    if is_auth_error(err):
+        return "invalid_auth"
+    _LOGGER.warning("PetTracer login failed: %s", err)
+    return "cannot_connect"
 
 
 class PetTracerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -41,8 +50,11 @@ class PetTracerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self._test_credentials(
                     user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
                 )
-            except PetTracerError:
-                errors["base"] = "invalid_auth"
+            except PetTracerError as err:
+                errors["base"] = _login_error(err)
+            except TimeoutError:
+                _LOGGER.warning("Timed out logging in to PetTracer")
+                errors["base"] = "cannot_connect"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
@@ -79,8 +91,11 @@ class PetTracerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             try:
                 await self._test_credentials(username, password)
-            except PetTracerError:
-                errors["base"] = "invalid_auth"
+            except PetTracerError as err:
+                errors["base"] = _login_error(err)
+            except TimeoutError:
+                _LOGGER.warning("Timed out logging in to PetTracer")
+                errors["base"] = "cannot_connect"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"

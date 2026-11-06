@@ -1,9 +1,10 @@
 """Fixtures for PetTracer tests."""
-from unittest.mock import AsyncMock, create_autospec, patch
+from unittest.mock import AsyncMock, MagicMock, create_autospec, patch
 
 import pytest
+from aiohttp import ClientConnectionError, ClientResponseError
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from pettracer import PetTracerClient
+from pettracer import PetTracerClient, PetTracerError
 from pettracer.types import Device
 
 # This fixture enables loading custom integrations in pytest tests
@@ -144,3 +145,28 @@ def config_entry_data():
         CONF_USERNAME: "test@example.com",
         CONF_PASSWORD: "test_password",
     }
+
+
+def make_pettracer_error(status: int | None = None) -> PetTracerError:
+    """Build a PetTracerError the way pettracer-client raises it.
+
+    The library wraps every aiohttp error in a plain PetTracerError and keeps
+    the original as __cause__: an HTTP status error when ``status`` is given,
+    otherwise a connection error.
+    """
+    if status is None:
+        cause = ClientConnectionError("Cannot connect")
+    else:
+        cause = ClientResponseError(
+            request_info=MagicMock(), history=(), status=status
+        )
+    try:
+        raise PetTracerError(f"HTTP error: {cause}") from cause
+    except PetTracerError as err:
+        return err
+
+
+@pytest.fixture
+def pettracer_error():
+    """Factory for PetTracerErrors shaped like the library's (see make_pettracer_error)."""
+    return make_pettracer_error
