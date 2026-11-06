@@ -27,7 +27,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    CHARGE_STATE_CHARGED,
+    CHARGE_STATE_CHARGING,
+    CHARGE_STATE_OFF_CHARGER,
+    CHARGE_STATES,
     DOMAIN,
+    FLAG_ON_CHARGER,
     MODE_NAMES,
     VALID_MODES,
 )
@@ -137,6 +142,31 @@ def _get_mode_attrs(device: Any) -> dict[str, Any]:
     return {}
 
 
+def _get_charge_state(device: Any) -> str | None:
+    """Get the charge state: charging, charged (still on charger) or off charger.
+
+    `chg` wins over `flags`, so a collar that reports charging is "charging"
+    even if its on-charger bit is missing. Returns None (unknown) when the API
+    did not send the fields needed to decide.
+    """
+    if device is None:
+        return None
+    if device.chg:
+        return CHARGE_STATE_CHARGING
+    if device.chg is None or device.flags is None:
+        return None
+    if device.flags & FLAG_ON_CHARGER:
+        return CHARGE_STATE_CHARGED
+    return CHARGE_STATE_OFF_CHARGER
+
+
+def _get_charge_state_attrs(device: Any) -> dict[str, Any]:
+    """Expose the raw API fields the charge state is derived from."""
+    if device is None:
+        return {}
+    return {"chg": device.chg, "flags": device.flags}
+
+
 SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
     PetTracerSensorEntityDescription(
         key="battery_level",
@@ -234,6 +264,16 @@ SENSOR_DESCRIPTIONS: tuple[PetTracerSensorEntityDescription, ...] = (
         icon="mdi:cog-outline",
         value_fn=_get_mode,
         extra_attrs_fn=_get_mode_attrs,
+    ),
+    PetTracerSensorEntityDescription(
+        key="charge_state",
+        display_name="Charge State",
+        translation_key="charge_state",
+        device_class=SensorDeviceClass.ENUM,
+        options=CHARGE_STATES,
+        icon="mdi:battery-charging",
+        value_fn=_get_charge_state,
+        extra_attrs_fn=_get_charge_state_attrs,
     ),
 )
 

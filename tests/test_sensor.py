@@ -3,6 +3,8 @@
 from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
@@ -56,8 +58,8 @@ async def test_sensor_setup(hass, mock_pettracer_client_init, mock_device):
 
         await sensor_setup(hass, entry, mock_add_entities)
 
-        # Should create 11 sensors per device (AtHome moved to binary_sensor)
-        assert len(entities) == 11
+        # Should create 12 sensors per device (AtHome moved to binary_sensor)
+        assert len(entities) == 12
 
 
 async def test_battery_sensor(hass, mock_device):
@@ -457,3 +459,97 @@ async def test_battery_percentage_edge_cases(hass, mock_device):
     # Test 4100mV (should be 83%)
     mock_device.bat = 4100
     assert sensor.native_value == 83
+
+
+def _charge_state_sensor(device):
+    """Build a Charge State sensor whose coordinator holds just this device."""
+    coordinator = MagicMock()
+    coordinator.data = {"devices": [device]}
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "charge_state")
+    return PetTracerSensor(coordinator, device, description)
+
+
+async def test_charge_state_sensor_metadata(hass, mock_device):
+    """Test the Charge State sensor is an enum with the three documented states."""
+    sensor = _charge_state_sensor(mock_device)
+
+    assert sensor.unique_id == "pettracer_12345_charge_state"
+    assert sensor.name == "Charge State"
+    assert sensor._attr_suggested_object_id == "pettracer_12345_charge_state"
+    assert sensor.device_class == SensorDeviceClass.ENUM
+    assert sensor.options == ["charging", "charged", "off_charger"]
+
+
+@pytest.mark.parametrize(
+    ("chg", "flags", "expected"),
+    [
+        # Values seen live on 2026-11-06 across a full charge cycle.
+        (1, 6, "charging"),
+        (0, 2, "charged"),
+        (0, 0, "off_charger"),
+        # Bit 0x20 flips on and off for collars nowhere near a charger.
+        (0, 32, "off_charger"),
+        (0, 34, "charged"),
+        # Only bit 0x02 means on charger; 0x04 tracks chg.
+        (0, 4, "off_charger"),
+        # chg wins: a charging collar is charging even without the bit.
+        (1, 0, "charging"),
+        # Not enough data to decide.
+        (0, None, None),
+        (None, 2, None),
+        (None, None, None),
+    ],
+)
+async def test_charge_state_values(hass, device_payload, chg, flags, expected):
+    """Test charge state is derived from chg and the on-charger flags bit."""
+    device = Device.from_dict(device_payload(chg=chg, flags=flags))
+    sensor = _charge_state_sensor(device)
+
+    assert sensor.native_value == expected
+    assert sensor.extra_state_attributes == {"chg": chg, "flags": flags}
+
+
+async def test_charge_state_device_missing(hass, mock_device):
+    """Test charge state is unknown when the device drops out of coordinator data."""
+    sensor = _charge_state_sensor(mock_device)
+    sensor.coordinator.data = {"devices": []}
+
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes == {}
+
+
+async def test_charge_state_through_real_setup(
+    hass, mock_pettracer_client_init, device_payload
+):
+    """Test the Charge State entity is written to hass and follows coordinator updates."""
+    from homeassistant.helpers import entity_registry as er
+
+    mock_pettracer_client_init.get_all_devices.return_value = [
+        Device.from_dict(device_payload(chg=1, flags=6))
+    ]
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_USERNAME: "test@example.com", CONF_PASSWORD: "test_password"},
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    entity_id = er.async_get(hass).async_get_entity_id(
+        "sensor", DOMAIN, "pettracer_12345_charge_state"
+    )
+    # HA derives the entity_id from the device (pet) name, as the README documents.
+    assert entity_id == "sensor.fluffy_charge_state"
+    state = hass.states.get(entity_id)
+    assert state.state == "charging"
+    assert state.attributes["options"] == ["charging", "charged", "off_charger"]
+    assert state.attributes["chg"] == 1
+    assert state.attributes["flags"] == 6
+
+    # Fast charge ends: chg drops, on-charger bit stays set.
+    mock_pettracer_client_init.get_all_devices.return_value = [
+        Device.from_dict(device_payload(chg=0, flags=2))
+    ]
+    await hass.data[DOMAIN][entry.entry_id].async_refresh()
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "charged"
