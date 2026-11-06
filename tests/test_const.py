@@ -1,4 +1,7 @@
 """Test constants for PetTracer integration."""
+import json
+from pathlib import Path
+
 import pytest
 
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
@@ -15,6 +18,8 @@ from custom_components.pettracer.const import (
     MODE_SLOW,
     VALID_MODES,
     MODE_NAMES,
+    CHARGE_STATES,
+    FLAG_ON_CHARGER,
 )
 
 
@@ -70,3 +75,26 @@ def test_mode_names():
     assert MODE_NAMES[MODE_SLOW_PLUS] == "Slow+"
     assert MODE_NAMES[MODE_SLOW] == "Slow"
     assert len(MODE_NAMES) == 7
+
+
+def test_charge_state_constants():
+    """Test charge state constants match the API's on-charger flags bit."""
+    assert FLAG_ON_CHARGER == 0x02
+    assert CHARGE_STATES == ["charging", "charged", "off_charger"]
+
+
+COMPONENT_DIR = Path(__file__).parent.parent / "custom_components" / "pettracer"
+
+
+def test_translations_in_sync():
+    """Test translations/en.json matches strings.json."""
+    strings = json.loads((COMPONENT_DIR / "strings.json").read_text())
+    english = json.loads((COMPONENT_DIR / "translations" / "en.json").read_text())
+    assert strings == english
+
+
+def test_charge_state_translations_cover_states():
+    """Test every charge state has a translation and no translation is orphaned."""
+    strings = json.loads((COMPONENT_DIR / "strings.json").read_text())
+    states = strings["entity"]["sensor"]["charge_state"]["state"]
+    assert set(states) == set(CHARGE_STATES)

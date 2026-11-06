@@ -36,3 +36,17 @@ MODE_NAMES = {
     MODE_SLOW_PLUS: "Slow+",
     MODE_SLOW: "Slow",
 }
+
+# Charge state - derived from the collar's `chg` and `flags` API fields.
+# `chg` is 1 while the collar is actively charging (fast charge). Bit 0x02 of
+# `flags` is set while the collar sits on its charger, whether or not it is
+# still charging. The PetTracer app and portal use the same two fields.
+FLAG_ON_CHARGER = 0x02
+CHARGE_STATE_CHARGING = "charging"
+CHARGE_STATE_CHARGED = "charged"
+CHARGE_STATE_OFF_CHARGER = "off_charger"
+CHARGE_STATES = [
+    CHARGE_STATE_CHARGING,
+    CHARGE_STATE_CHARGED,
+    CHARGE_STATE_OFF_CHARGER,
+]

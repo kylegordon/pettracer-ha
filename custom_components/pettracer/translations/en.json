@@ -25,5 +25,17 @@
       "already_configured": "Account is already configured",
       "reauth_successful": "Re-authentication was successful"
     }
+  },
+  "entity": {
+    "sensor": {
+      "charge_state": {
+        "name": "Charge State",
+        "state": {
+          "charging": "Charging",
+          "charged": "Charged (on charger)",
+          "off_charger": "Off charger"
+        }
+      }
+    }
   }
 }
