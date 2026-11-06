@@ -14,6 +14,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
+from .utils import is_auth_error
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,8 +37,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         await client.login(username, password)
     except PetTracerError as err:
-        _LOGGER.error("Failed to authenticate with PetTracer: %s", err)
-        raise ConfigEntryAuthFailed from err
+        if is_auth_error(err):
+            raise ConfigEntryAuthFailed("PetTracer rejected the credentials") from err
+        raise ConfigEntryNotReady(f"Cannot connect to PetTracer: {err}") from err
+    except TimeoutError as err:
+        raise ConfigEntryNotReady("Timed out connecting to PetTracer") from err
     except Exception as err:
         _LOGGER.error("Unexpected error during PetTracer authentication: %s", err)
         raise ConfigEntryNotReady from err
@@ -81,11 +85,38 @@ class PetTracerDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self) -> dict:
-        """Fetch data from PetTracer API."""
+        """Fetch data from PetTracer API, logging in again if the token expired."""
         try:
             devices = await self.client.get_all_devices()
-            return {"devices": devices}
         except PetTracerError as err:
-            raise UpdateFailed(
-                f"Error communicating with PetTracer API: {err}"
-            ) from err
+            if not is_auth_error(err):
+                raise UpdateFailed(
+                    f"Error communicating with PetTracer API: {err}"
+                ) from err
+            _LOGGER.debug("PetTracer token rejected, logging in again")
+            await self._async_relogin()
+            try:
+                devices = await self.client.get_all_devices()
+            except PetTracerError as retry_err:
+                if is_auth_error(retry_err):
+                    raise ConfigEntryAuthFailed(
+                        "PetTracer rejected the token straight after login"
+                    ) from retry_err
+                raise UpdateFailed(
+                    f"Error communicating with PetTracer API: {retry_err}"
+                ) from retry_err
+        return {"devices": devices}
+
+    async def _async_relogin(self) -> None:
+        """Log in again with the stored credentials."""
+        try:
+            await self.client.login(
+                self.config_entry.data[CONF_USERNAME],
+                self.config_entry.data[CONF_PASSWORD],
+            )
+        except PetTracerError as err:
+            if is_auth_error(err):
+                raise ConfigEntryAuthFailed(
+                    "PetTracer rejected the credentials"
+                ) from err
+            raise UpdateFailed(f"Error logging in to PetTracer: {err}") from err

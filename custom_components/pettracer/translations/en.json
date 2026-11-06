@@ -19,6 +19,7 @@
     },
     "error": {
       "invalid_auth": "Invalid username or password",
+      "cannot_connect": "Cannot connect to PetTracer, try again later",
       "unknown": "Unexpected error occurred"
     },
     "abort": {

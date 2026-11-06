@@ -48,7 +48,7 @@ async def test_form_user_success(hass, mock_setup_entry):
     assert len(mock_setup_entry.mock_calls) == 1
 
 
-async def test_form_invalid_auth(hass, mock_setup_entry):
+async def test_form_invalid_auth(hass, mock_setup_entry, pettracer_error):
     """Test we handle invalid auth."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
@@ -58,7 +58,7 @@ async def test_form_invalid_auth(hass, mock_setup_entry):
         "custom_components.pettracer.config_flow.PetTracerClient"
     ) as mock_client:
         client_instance = create_autospec(PetTracerClient, instance=True)
-        client_instance.login.side_effect = PetTracerError("Invalid credentials")
+        client_instance.login.side_effect = pettracer_error(401)
         mock_client.return_value = client_instance
         
         result2 = await hass.config_entries.flow.async_configure(
@@ -244,7 +244,7 @@ async def test_reauth_flow_unknown_exception(hass, mock_setup_entry):
     assert result2["errors"] == {"base": "unknown"}
 
 
-async def test_reauth_flow_invalid_auth(hass, mock_setup_entry):
+async def test_reauth_flow_invalid_auth(hass, mock_setup_entry, pettracer_error):
     """Test reauth flow with invalid credentials."""
     from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -264,7 +264,7 @@ async def test_reauth_flow_invalid_auth(hass, mock_setup_entry):
         "custom_components.pettracer.config_flow.PetTracerClient"
     ) as mock_client:
         client_instance = create_autospec(PetTracerClient, instance=True)
-        client_instance.login.side_effect = PetTracerError("Invalid")
+        client_instance.login.side_effect = pettracer_error(401)
         mock_client.return_value = client_instance
 
         result2 = await hass.config_entries.flow.async_configure(
@@ -274,3 +274,124 @@ async def test_reauth_flow_invalid_auth(hass, mock_setup_entry):
 
     assert result2["type"] == FlowResultType.FORM
     assert result2["errors"] == {"base": "invalid_auth"}
+
+
+async def test_form_cannot_connect(hass, mock_setup_entry, pettracer_error):
+    """A network error during setup is cannot_connect, not invalid_auth."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = create_autospec(PetTracerClient, instance=True)
+        client_instance.login.side_effect = pettracer_error()
+        mock_client.return_value = client_instance
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: "test@example.com", CONF_PASSWORD: "test_password"},
+        )
+
+    assert result2["type"] == FlowResultType.FORM
+    assert result2["errors"] == {"base": "cannot_connect"}
+
+
+async def test_form_cannot_connect_without_http_cause(hass, mock_setup_entry):
+    """Library errors with no HTTP cause (e.g. bad JSON) are cannot_connect."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = create_autospec(PetTracerClient, instance=True)
+        client_instance.login.side_effect = PetTracerError("Login response is not JSON")
+        mock_client.return_value = client_instance
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: "test@example.com", CONF_PASSWORD: "test_password"},
+        )
+
+    assert result2["errors"] == {"base": "cannot_connect"}
+
+
+async def test_reauth_flow_cannot_connect(hass, mock_setup_entry, pettracer_error):
+    """A network error during reauth is cannot_connect."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_USERNAME: "test@example.com", CONF_PASSWORD: "old_password"},
+        unique_id="test@example.com",
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = create_autospec(PetTracerClient, instance=True)
+        client_instance.login.side_effect = pettracer_error(503)
+        mock_client.return_value = client_instance
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_PASSWORD: "new_password"},
+        )
+
+    assert result2["type"] == FlowResultType.FORM
+    assert result2["errors"] == {"base": "cannot_connect"}
+
+
+async def test_form_timeout_cannot_connect(hass, mock_setup_entry):
+    """A login timeout (not wrapped by the library) is cannot_connect."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = create_autospec(PetTracerClient, instance=True)
+        client_instance.login.side_effect = TimeoutError()
+        mock_client.return_value = client_instance
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: "test@example.com", CONF_PASSWORD: "test_password"},
+        )
+
+    assert result2["errors"] == {"base": "cannot_connect"}
+
+
+async def test_reauth_flow_timeout_cannot_connect(hass, mock_setup_entry):
+    """A login timeout during reauth is cannot_connect."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_USERNAME: "test@example.com", CONF_PASSWORD: "old_password"},
+        unique_id="test@example.com",
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+
+    with patch(
+        "custom_components.pettracer.config_flow.PetTracerClient"
+    ) as mock_client:
+        client_instance = create_autospec(PetTracerClient, instance=True)
+        client_instance.login.side_effect = TimeoutError()
+        mock_client.return_value = client_instance
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_PASSWORD: "new_password"},
+        )
+
+    assert result2["errors"] == {"base": "cannot_connect"}
