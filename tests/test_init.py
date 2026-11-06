@@ -504,3 +504,26 @@ async def test_real_setup_login_timeout_retries(hass, mock_pettracer_client_init
 
     assert entry.state is ConfigEntryState.SETUP_RETRY
     assert _reauth_flows(hass, entry) == []
+
+
+async def test_setup_uses_shared_session(hass, mock_pettracer_client_init, mock_device):
+    """The client reuses HA's shared aiohttp session instead of opening its own."""
+    from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+    entry = _entry(hass)
+    mock_pettracer_client_init.get_all_devices.return_value = [mock_device]
+
+    with (
+        patch(
+            "custom_components.pettracer.PetTracerClient",
+            return_value=mock_pettracer_client_init,
+        ) as mock_client,
+        patch(
+            "homeassistant.config_entries.ConfigEntries.async_forward_entry_setups",
+            return_value=True,
+        ),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    mock_client.assert_called_once_with(session=async_get_clientsession(hass))
