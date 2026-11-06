@@ -1,0 +1,20 @@
+# Groups the generated release notes by PR label.
+# Used by the release PR body and the published GitHub release.
+changelog:
+  exclude:
+    labels:
+      - release
+  categories:
+    - title: Features
+      labels:
+        - enhancement
+    - title: Fixes
+      labels:
+        - bug
+    - title: Chores
+      labels:
+        - chore
+        - dependencies
+    - title: Other changes
+      labels:
+        - "*"

@@ -20,12 +20,14 @@ This repository uses **squash merges only**. When a PR is merged, GitHub creates
 
 PR titles can be anything descriptive. No special format is required.
 
+Label each PR so the release notes group it: `enhancement` (Features), `bug` (Fixes), or `chore` (Chores). Dependabot and Renovate PRs get `dependencies` automatically and land under Chores. Unlabelled PRs appear under Other changes. Categories are set in `.github/release.yml`.
+
 ### Release Process
 
 Releases are automated. No manual tagging or version bumping needed.
 
 1. Merge PRs to `master` as normal. Every merged PR is automatically included in the next release.
-2. After each merge, the `release.yml` workflow creates or updates a **release PR** that bumps the patch version and lists all PRs merged since the last release.
+2. After each merge, the `.github/workflows/release.yml` workflow creates or updates a **release PR** that bumps the patch version and lists all PRs merged since the last release.
 3. When ready to ship, **merge the release PR**. The workflow then creates a git tag, publishes a GitHub release, and uploads the HACS ZIP.
 
 ### Branch Protection
