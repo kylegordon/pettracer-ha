@@ -11,14 +11,13 @@ Runs on every push and pull request to master, main, or dev branches.
 
 1. **Test** - Runs the test suite
    - Tests on Python 3.14, with pettracer-client installed at the version pinned in manifest.json
-   - Runs pytest with coverage
+   - Runs pytest with branch coverage
    - Uploads coverage to Codecov
    - Enforces minimum 90% coverage
 
-2. **Lint** - Code quality checks
-   - Runs `ruff` linter
-   - Checks code formatting
-   - Continues on errors (non-blocking)
+2. **Lint** - Code quality checks (blocking)
+   - Runs `ruff check` and `ruff format --check` on the integration code
+   - Uses the ruff version pinned in `requirements-test.txt`
 
 3. **Validate** - JSON validation
    - Validates manifest.json
@@ -45,12 +44,11 @@ Runs on every push to `master`. Every merged PR is automatically included in the
 ## Usage
 
 ### Running Tests Locally
+Tests run in Docker; see CLAUDE.md or CONTRIBUTING.md.
 ```bash
-# Install dependencies
-pip install -r requirements-test.txt
-
-# Run tests
-pytest --cov=custom_components.pettracer --cov-report=term -v
+docker build -f Dockerfile.dev -t pettracer-dev .
+docker run --rm -v "$PWD":/workspace pettracer-dev \
+  pytest --cov=custom_components.pettracer --cov-branch --cov-report=term -v
 ```
 
 ### Triggering Workflows

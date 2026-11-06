@@ -5,14 +5,13 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 
-from pettracer import PetTracerClient, PetTracerError
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from pettracer import PetTracerClient, PetTracerError
 
 from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
 from .utils import is_auth_error

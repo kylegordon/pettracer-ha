@@ -70,6 +70,11 @@ class PetTracerAtHomeBinarySensor(CoordinatorEntity, BinarySensorEntity):
         return None
 
     @property
+    def available(self) -> bool:
+        """Available only while polling succeeds and the collar is still listed."""
+        return super().available and self._get_device_data() is not None
+
+    @property
     def is_on(self) -> bool | None:
         """Return true if the pet is at home."""
         device = self._get_device_data()
@@ -114,6 +119,11 @@ class PetTracerChargingBinarySensor(CoordinatorEntity, BinarySensorEntity):
             if device.id == self._device_id:
                 return device
         return None
+
+    @property
+    def available(self) -> bool:
+        """Available only while polling succeeds and the collar is still listed."""
+        return super().available and self._get_device_data() is not None
 
     @property
     def is_on(self) -> bool | None:

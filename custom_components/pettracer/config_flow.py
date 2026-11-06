@@ -5,13 +5,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pettracer import PetTracerClient, PetTracerError
 import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from pettracer import PetTracerClient, PetTracerError
 
 from .const import DOMAIN
 from .utils import is_auth_error
@@ -73,9 +72,7 @@ class PetTracerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
-    async def async_step_reauth(
-        self, entry_data: dict[str, Any]
-    ) -> FlowResult:
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> FlowResult:
         """Handle reauth when credentials are invalid."""
         return await self.async_step_reauth_confirm()
 

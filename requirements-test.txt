@@ -1,3 +1,6 @@
 # Test requirements for PetTracer Home Assistant integration
-pytest-homeassistant-custom-component>=0.13.375
+# Pinned exactly so the tested Home Assistant version only changes via a
+# Dependabot PR.
+pytest-homeassistant-custom-component==0.13.375
 pytest-cov>=7.1.0
+ruff==0.17.4

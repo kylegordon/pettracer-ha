@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from aiohttp import ClientResponseError
-
 from pettracer import PetTracerError
 
 # The PetTracer API answers a wrong password with 401 and an expired or
@@ -28,4 +27,6 @@ def battery_mv_to_percentage(mv: int) -> int:
 def is_auth_error(err: PetTracerError) -> bool:
     """Return True if a PetTracerError came from rejected credentials or token."""
     cause = err.__cause__
-    return isinstance(cause, ClientResponseError) and cause.status in AUTH_ERROR_STATUSES
+    return (
+        isinstance(cause, ClientResponseError) and cause.status in AUTH_ERROR_STATUSES
+    )

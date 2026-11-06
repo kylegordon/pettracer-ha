@@ -38,17 +38,19 @@ The `master` branch has branch protection enabled:
 
 ### Local Development
 
-You can still run and test locally:
+Development runs in Docker; don't install dependencies on the host:
 
 ```bash
-# Install dependencies
-pip install -r requirements-test.txt
+# Build the dev image (again after requirements-test.txt or manifest.json changes)
+docker build -f Dockerfile.dev -t pettracer-dev .
 
 # Run tests
-pytest --cov=custom_components.pettracer --cov-report=term -v
+docker run --rm -v "$PWD":/workspace pettracer-dev \
+  pytest --cov=custom_components.pettracer --cov-branch --cov-report=term -v
 
-# Lint
-ruff check custom_components/pettracer/
+# Lint and format check (both block CI)
+docker run --rm -v "$PWD":/workspace pettracer-dev ruff check custom_components/pettracer/
+docker run --rm -v "$PWD":/workspace pettracer-dev ruff format --check custom_components/pettracer/
 ```
 
 Do your work on a feature branch and open a PR — or use a Copilot task to do it for you.

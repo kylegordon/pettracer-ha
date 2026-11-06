@@ -4,11 +4,15 @@ This directory contains comprehensive tests for the PetTracer integration.
 
 ## Running Tests
 
-### Install test dependencies
+### Build the dev image
+
+Tests run in Docker (see CLAUDE.md); don't install dependencies on the host.
 
 ```bash
-pip install -r requirements-test.txt
+docker build -f Dockerfile.dev -t pettracer-dev .
 ```
+
+Prefix the commands below with `docker run --rm -v "$PWD":/workspace pettracer-dev`.
 
 ### Run all tests
 
