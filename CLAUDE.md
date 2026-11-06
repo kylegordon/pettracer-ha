@@ -50,6 +50,8 @@ This is a Home Assistant custom component that bridges the PetTracer GPS collar 
 
 **Data flow:** The coordinator calls `client.get_all_devices()` every 60 seconds. Each platform's `async_setup_entry` iterates `coordinator.data["devices"]` and creates entities. Entities extend `CoordinatorEntity` and call `_get_device_data()` to look up their specific device by `device.id` from the coordinator's latest data.
 
+**HTTP session:** always build the client as `PetTracerClient(session=async_get_clientsession(hass))`. A bare `PetTracerClient()` opens its own aiohttp session that is never closed.
+
 **Errors:** pettracer-client raises a plain `PetTracerError` for everything and keeps the aiohttp error as `__cause__`. `utils.is_auth_error()` treats a 401 (wrong password) or 403 (expired/invalid token) cause as an auth failure; anything else is an outage. Auth failures → `ConfigEntryAuthFailed` / `invalid_auth`; outages → `ConfigEntryNotReady` / `UpdateFailed` / `cannot_connect`. A total-request timeout surfaces as a bare `TimeoutError` (not wrapped) and also counts as an outage. On a poll that gets 401/403 the coordinator logs in once with the stored credentials and retries before starting reauth. Tests build errors with the `pettracer_error` fixture so they carry a realistic cause.
 
 **Sensor pattern:** `sensor.py` uses `PetTracerSensorEntityDescription` (a frozen dataclass extending `SensorEntityDescription`) with a `value_fn: Callable[[device], Any]` field. Adding a new sensor means writing a `_get_*` function and adding an entry to `SENSOR_DESCRIPTIONS` — no new class needed.
