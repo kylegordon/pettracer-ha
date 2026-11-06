@@ -219,7 +219,7 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 ### Data Flow
 - PetTracerClient (external library) → DataUpdateCoordinator → Entities
 - Coordinator calls `client.get_all_devices()` every 60 seconds
-- Each device creates: 1 device_tracker + 12 sensor entities
+- Each device creates: 1 device_tracker + 12 sensor + 2 binary_sensor entities
 
 ### Entity Structure
 **Device Tracker** (device_tracker.py):
@@ -231,7 +231,10 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 - Latitude, Longitude, GPS Accuracy (m)
 - Last Contact (timestamp), Position Time (timestamp)
 - Satellites (count), Signal Strength (dBm)
-- Status, Mode, At Home (text)
+- Status, Mode, Charge State (enum: charging / charged / off_charger, from `chg` + `flags` bit 0x02; see README "How charging is reported")
+
+**Binary sensors** (binary_sensor.py):
+- At Home, Charging (raw `chg`; turns off when fast charge ends, not when full)
 
 ### Important Constants (const.py)
 - `DOMAIN = "pettracer"`

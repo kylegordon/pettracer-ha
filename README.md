@@ -13,6 +13,7 @@ This integration uses the [petTracer-API](https://github.com/AmbientArchitect/pe
 - 📍 **Device Tracking**: Each collar appears as a trackable device in Home Assistant
 - 🗺️ **GPS Coordinates**: Real-time latitude/longitude coordinates for all your pet collars
 - 🔋 **Battery Monitoring**: See battery level and voltage for each collar
+- 🔌 **Charge State**: Know when a collar is charging, charged on its charger, or off the charger
 - 📡 **Signal Quality**: View satellite count and signal strength information
 - 🏠 **Home Detection**: Track whether your pet is at home
 - 📊 **Individual Sensors**: Each attribute is exposed as a separate sensor entity with appropriate device classes
@@ -100,6 +101,21 @@ Each collar provides the following individual sensor entities:
   - Unit: mV
   - Raw battery voltage reading
 
+#### Charging Sensors
+- **Charge State** (`sensor.pet_name_charge_state`)
+  - Device class: Enum
+  - States:
+    - `charging`: the collar is fast charging
+    - `charged`: fast charge has finished and the collar is still on its charger
+    - `off_charger`: the collar is not on its charger
+    - `unknown`: the API did not report the fields needed to decide
+  - Attributes `chg` and `flags` show the raw API values the state comes from
+  - See [How charging is reported](#how-charging-is-reported) for what each state means in practice
+
+- **Charging** (`binary_sensor.pet_name_charging`)
+  - Device class: Battery charging
+  - On while the API's `chg` field is 1. It turns off when fast charge ends, which is not the same as the battery being full, and it cannot tell "charged, still on the charger" from "off the charger". Use Charge State for that.
+
 #### Location Sensors
 - **Latitude** (`sensor.pet_name_latitude`)
   - GPS latitude coordinate
@@ -182,6 +198,22 @@ automation:
           message: "Pet collar battery is low ({{ states('sensor.your_pet_name_battery_level') }}%)"
 ```
 
+**Notify when a collar has finished charging:**
+```yaml
+automation:
+  - alias: "Pet Collar Charged"
+    trigger:
+      - platform: state
+        entity_id: sensor.your_pet_name_charge_state
+        from: "charging"
+        to: "charged"
+    action:
+      - service: notify.mobile_app
+        data:
+          title: "Collar Charged"
+          message: "Pet collar has finished charging and can go back on."
+```
+
 **Notify when GPS accuracy is poor:**
 ```yaml
 automation:
@@ -211,6 +243,54 @@ automation:
           title: "Mode Change"
           message: "Pet collar switched to Live mode (mode number: {{ state_attr('sensor.your_pet_name_mode', 'mode_number') }})"
 ```
+
+## How charging is reported
+
+The PetTracer cloud API reports two charging fields per collar. The PetTracer app, the web portal and this integration all build on them.
+
+### Underlying API fields
+
+| Field | Meaning |
+|---|---|
+| `chg` | 1 while the collar is fast charging, 0 otherwise |
+| `flags` bit `0x02` | Set while the collar is on its charger, whether or not it is still charging |
+| `flags` bit `0x04` | Set and cleared together with `chg` |
+| `bat` | Battery voltage in mV. Only refreshes every 30 to 60 minutes, so it can lag the charge state |
+
+Other `flags` bits are unrelated to charging. Bit `0x20`, for example, flips on and off for collars that are nowhere near a charger. While the collar is on its charger, `mode` usually reads differently from `modeSet` and goes back when the collar is lifted off.
+
+### What the integration shows
+
+| `chg` | `flags & 0x02` | Charge State | Charging (binary) |
+|---|---|---|---|
+| 1 | any | `charging` | on |
+| 0 | set | `charged` | off |
+| 0 | clear | `off_charger` | off |
+| 0 | missing | `unknown` | off |
+| missing | any | `unknown` | unknown |
+
+The integration does not apply any battery voltage thresholds. It reports what the collar reports.
+
+### What the PetTracer app shows
+
+| App battery icon | Integration Charge State |
+|---|---|
+| Animated charging battery | `charging` |
+| Full bars with a lightning symbol | `charged` |
+| Bars, no lightning | `off_charger` (or `charging` on an already full battery, see below) |
+
+The web portal applies extra voltage checks: it only shows the charging animation below 4100 mV and only shows the lightning symbol above 4100 mV. The phone app was seen showing the lightning symbol at 4019 mV, so it does not seem to apply the second check.
+
+### A charge cycle in practice
+
+Observed on real collars:
+
+1. **On the charger:** `chg` goes to 1 and Charge State becomes `charging`.
+2. **Fast charge ends** after roughly 1h45 to 2h45, depending on the starting voltage, at around 4000 to 4150 mV. `chg` goes to 0 while the on-charger bit stays set, Charge State becomes `charged`, and the app shows the lightning symbol.
+3. **Top-up:** the battery keeps rising on the charger for another 1 to 3 hours and levels off at about 4150 to 4170 mV. Nothing in the API marks this phase, so it is still `charged`. To catch the true peak, watch Battery Voltage stop rising.
+4. **Off the charger:** the on-charger bit clears within a poll or two and Charge State becomes `off_charger`.
+
+Putting a collar that is already full back on its charger briefly reports `chg` = 1 (`charging`) before it drops back to `charged` a few minutes later. The app shows plain full bars without the lightning symbol during that time.
 
 ## Troubleshooting
 
