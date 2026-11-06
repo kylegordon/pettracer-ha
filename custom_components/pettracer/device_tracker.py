@@ -68,8 +68,8 @@ class PetTracerDeviceTracker(CoordinatorEntity, TrackerEntity):
 
     @property
     def available(self) -> bool:
-        """Return True if entity is available."""
-        return self._get_device_data() is not None
+        """Available only while polling succeeds and the collar is still listed."""
+        return super().available and self._get_device_data() is not None
 
     @property
     def source_type(self) -> SourceType:

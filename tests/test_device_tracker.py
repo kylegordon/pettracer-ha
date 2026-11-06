@@ -325,3 +325,41 @@ async def test_device_tracker_partial_attributes(hass, device_payload):
     assert "status" not in attributes
     assert "mode" not in attributes
     assert "at_home" not in attributes
+
+
+def _real_coordinator(hass, devices):
+    """A real DataUpdateCoordinator, so last_update_success behaves as in HA."""
+    import logging
+    from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
+    coordinator = DataUpdateCoordinator(
+        hass, logging.getLogger(__name__), name="test", config_entry=None
+    )
+    coordinator.async_set_updated_data({"devices": devices})
+    return coordinator
+
+
+async def test_device_tracker_unavailable_when_polling_fails(hass, mock_device):
+    """The tracker goes unavailable when the coordinator's last update failed."""
+    from custom_components.pettracer.device_tracker import PetTracerDeviceTracker
+
+    coordinator = _real_coordinator(hass, [mock_device])
+    tracker = PetTracerDeviceTracker(coordinator, mock_device)
+    assert tracker.available is True
+
+    # A failed poll keeps the old data but marks the update unsuccessful
+    coordinator.last_update_success = False
+    assert coordinator.data == {"devices": [mock_device]}
+    assert tracker.available is False
+
+    coordinator.async_set_updated_data({"devices": [mock_device]})
+    assert tracker.available is True
+
+
+async def test_device_tracker_unavailable_when_device_missing(hass, mock_device):
+    """The tracker is unavailable when its collar drops out of the account."""
+    from custom_components.pettracer.device_tracker import PetTracerDeviceTracker
+
+    coordinator = _real_coordinator(hass, [])
+    tracker = PetTracerDeviceTracker(coordinator, mock_device)
+    assert tracker.available is False
