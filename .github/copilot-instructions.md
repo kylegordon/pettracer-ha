@@ -7,11 +7,10 @@ This is a **Home Assistant custom integration** for PetTracer GPS pet collars. I
 **Key Facts:**
 - **Type:** Home Assistant custom component (HACS-compatible)
 - **Language:** Python 3.12+
-- **Framework:** Home Assistant 2023.1+
+- **Framework:** Home Assistant 2024.11+
 - **Dependencies:** pettracer-client from PyPI, pinned only in `manifest.json` (Renovate opens bump PRs; CI installs the pinned version from there)
-- **Size:** 5 Python source files, 7 test files
+- **Size:** 7 Python source files in `custom_components/pettracer/`, plus tests
 - **Test Coverage:** minimum required: 90%
-- **Lines of Code:** ~734 lines in source, comprehensive test suite
 
 ## Project Structure
 
@@ -35,12 +34,11 @@ pettracer-ha/
 │   └── test_sensor.py
 ├── .github/workflows/              # CI/CD automation
 │   ├── test.yml                    # Main test pipeline (runs on PR/push)
-│   ├── release.yml                 # Release automation
-│   └── auto-release.yml            # Auto-release on manifest.json version change
+│   └── release.yml                 # Release PR on every merge; publishes when the release PR merges
 ├── pyproject.toml                  # Pytest & coverage configuration
 ├── requirements-test.txt           # Test dependencies
 ├── hacs.json                       # HACS compatibility metadata
-└── README.md, STRUCTURE.md         # Documentation
+└── README.md, CLAUDE.md            # Documentation
 ```
 
 ## Critical Build & Test Commands
@@ -85,17 +83,17 @@ pytest tests/test_config_flow.py -v
 **Check code with ruff (runs in CI):**
 
 ```bash
-# Install ruff first
-pip install ruff
+# Install the ruff version CI uses
+pip install $(grep '^ruff==' requirements-test.txt)
 
 # Check for lint errors
 ruff check custom_components/pettracer/ --output-format=github
 
-# Check formatting (NOTE: continue-on-error in CI)
+# Check formatting (blocks CI)
 ruff format --check custom_components/pettracer/
 ```
 
-**Important:** Formatting checks are non-blocking in CI (`continue-on-error: true`). Lint errors are also non-blocking but should be fixed if possible.
+**Important:** Both `ruff check` and `ruff format --check` block CI. Run them before pushing.
 
 ### JSON Validation
 
@@ -124,35 +122,28 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 1. **test** - Run test suite
    - Python 3.14
    - Installs: requirements-test.txt + pettracer-client at the version pinned in manifest.json
-   - Runs: `pytest --cov=custom_components.pettracer --cov-report=xml --cov-report=term -v`
+   - Runs: `pytest --cov=custom_components.pettracer --cov-branch --cov-report=xml --cov-report=term -v`
    - Uploads coverage to Codecov
    - **Enforces minimum 90% coverage** with `coverage report --fail-under=90`
    - **This job MUST pass**
 
-2. **lint** - Code quality (NON-BLOCKING)
-   - Python 3.12
-   - Runs: `ruff check` and `ruff format --check`
-   - Both steps have `continue-on-error: true` (won't fail CI)
-   - Fix linting issues when possible, but not required
+2. **lint** - Code quality (BLOCKING)
+   - Python 3.14, ruff version pinned in requirements-test.txt
+   - Runs: `ruff check` and `ruff format --check` on `custom_components/pettracer/`
+   - **This job MUST pass**
 
 3. **validate** - JSON validation (BLOCKING)
    - Validates manifest.json, strings.json, translations, hacs.json
    - **This job MUST pass**
 
-### auto-release.yml (Version-based Release)
+### release.yml (Release automation)
 
-**Triggers:** Push to master when `custom_components/pettracer/manifest.json` changes
+**Triggers:** Every push to master
 
 **Behavior:**
-- Automatically creates GitHub release when manifest.json version is updated
-- Creates ZIP package for HACS installation
-- **Important:** Only updates manifest.json version when making a release
-
-### release.yml (Manual Release)
-
-**Triggers:** Manual release publication
-
-**Behavior:** Creates release artifacts when release is manually published
+- Creates or updates the `release/next` PR, which bumps the patch version and lists merged PRs grouped by label (`.github/release.yml`)
+- Merging that PR (`chore: release v…`) tags, publishes the GitHub release and uploads the HACS ZIP
+- Never bump the version in manifest.json by hand
 
 ## Making Code Changes
 
@@ -165,7 +156,7 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
    ```
 3. **Fix any test failures** before proceeding
 4. **Validate JSON** if you edited manifest.json, strings.json, or translations
-5. **Run linting** (optional but recommended):
+5. **Run linting** (blocks CI):
    ```bash
    ruff check custom_components/pettracer/
    ruff format --check custom_components/pettracer/
@@ -178,7 +169,7 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 **Editing manifest.json:**
 - ALWAYS validate JSON syntax after editing
 - Version format: "X.Y.Z" (e.g., "1.0.1")
-- Changing version triggers auto-release workflow
+- Never change the version by hand; the release PR does it
 - Required fields: domain, name, version, requirements, documentation, codeowners
 
 **Editing Python files:**
@@ -266,7 +257,7 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 1. **ALWAYS run tests before committing** - Takes only 2 seconds
 2. **Never break JSON files** - Validate after every edit to manifest.json
 3. **Maintain ≥90% coverage** - CI will fail below this threshold
-4. **Don't change version in manifest.json** unless making a release (triggers auto-release)
+4. **Don't change version in manifest.json** — the release PR bumps it
 5. **Follow Home Assistant patterns** - Use DataUpdateCoordinator, proper device classes
 6. **Mock external dependencies** - Never call real PetTracer API in tests
 7. **Keep changes minimal** - This is a small, focused integration
@@ -275,7 +266,7 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 ## Documentation Files
 
 - **README.md** - User-facing documentation, installation, usage examples
-- **STRUCTURE.md** - Detailed file structure and architecture
+- **CLAUDE.md** - Architecture, CI behaviour and conventions
 - **.github/workflows/README.md** - CI/CD documentation
 - **tests/README.md** - Test suite documentation and coverage goals
 
@@ -296,6 +287,6 @@ The repository uses GitHub Actions with **3 workflows** that run on every push/P
 
 ## Final Notes
 
-This repository follows Home Assistant custom component standards and is HACS-compatible. Changes should maintain compatibility with Home Assistant 2023.1+ and follow the existing patterns for coordinators, entities, and config flows. Keep coverage at or above the 90% CI threshold.
+This repository follows Home Assistant custom component standards and is HACS-compatible. Changes should maintain compatibility with Home Assistant 2024.11+ and follow the existing patterns for coordinators, entities, and config flows. Keep coverage at or above the 90% CI threshold.
 
 **Trust these instructions.** Only search for additional information if something is unclear, incorrect, or if you're adding new functionality not covered here.

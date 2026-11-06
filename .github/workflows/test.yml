@@ -29,12 +29,12 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest --cov=custom_components.pettracer --cov-report=xml --cov-report=term -v
+          pytest --cov=custom_components.pettracer --cov-branch --cov-report=xml --cov-report=term -v
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
-          file: ./coverage.xml
+          files: ./coverage.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -45,7 +45,7 @@ jobs:
           coverage report --fail-under=90
 
   lint:
-    name: Lint and Type Check
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -55,23 +55,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.14"
           cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install ruff (version pinned in requirements-test.txt)
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy
+          pip install $(grep '^ruff==' requirements-test.txt)
 
       - name: Lint with ruff
         run: |
           ruff check custom_components/pettracer/ --output-format=github
-        continue-on-error: true
 
       - name: Check formatting with ruff
         run: |
           ruff format --check custom_components/pettracer/
-        continue-on-error: true
 
   validate:
     name: Validate

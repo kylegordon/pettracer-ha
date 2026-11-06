@@ -170,3 +170,24 @@ def make_pettracer_error(status: int | None = None) -> PetTracerError:
 def pettracer_error():
     """Factory for PetTracerErrors shaped like the library's (see make_pettracer_error)."""
     return make_pettracer_error
+
+
+@pytest.fixture
+def real_coordinator(hass):
+    """Factory for a real DataUpdateCoordinator holding the given devices.
+
+    Unlike a MagicMock, last_update_success behaves as it does in HA, so
+    availability tests are meaningful.
+    """
+    import logging
+
+    from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
+    def _make(devices):
+        coordinator = DataUpdateCoordinator(
+            hass, logging.getLogger(__name__), name="test", config_entry=None
+        )
+        coordinator.async_set_updated_data({"devices": devices})
+        return coordinator
+
+    return _make

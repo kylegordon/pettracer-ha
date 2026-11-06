@@ -21,7 +21,7 @@ This integration uses the [petTracer-API](https://github.com/AmbientArchitect/pe
 
 ## Requirements
 
-- Home Assistant 2023.1 or newer
+- Home Assistant 2024.11 or newer
 - A PetTracer GPS collar with active subscription
 - Valid PetTracer account credentials
 
@@ -94,7 +94,7 @@ Each collar provides the following individual sensor entities:
 - **Battery Level** (`sensor.pet_name_battery_level`)
   - Device class: Battery
   - Unit: %
-  - Calculated from battery voltage (3.0V-4.2V range)
+  - Calculated from battery voltage (3.6V-4.2V range)
   
 - **Battery Voltage** (`sensor.pet_name_battery_voltage`)
   - Device class: Voltage
@@ -163,8 +163,9 @@ Each collar provides the following individual sensor entities:
     - `Unrecognized`: Unknown mode (when device returns unexpected value)
   - Includes `mode_number` attribute with the numeric mode value
   
-- **At Home** (`sensor.pet_name_at_home`)
-  - Text sensor indicating if pet is at home ("true" or "false")
+- **At Home** (`binary_sensor.pet_name_at_home`)
+  - Device class: Presence (`on` / `off`)
+  - On while PetTracer reports the collar as home, which in practice tracks home-station radio range. It can flip several times a day and can disagree with the device tracker's GPS zone.
 
 ### Example Automations
 
@@ -174,8 +175,8 @@ automation:
   - alias: "Pet Left Home"
     trigger:
       - platform: state
-        entity_id: sensor.your_pet_name_at_home
-        to: "false"
+        entity_id: binary_sensor.your_pet_name_at_home
+        to: "off"
     action:
       - service: notify.mobile_app
         data:
@@ -388,13 +389,16 @@ The source tree is bind-mounted at `/workspace`, so code changes take effect imm
 ```
 custom_components/pettracer/
 ├── __init__.py          # Integration setup and coordinator
+├── binary_sensor.py     # At Home and Charging binary sensors
 ├── config_flow.py       # UI configuration flow
-├── const.py            # Constants
-├── device_tracker.py   # Device tracker platform
-├── manifest.json       # Integration metadata
-├── strings.json        # UI strings
+├── const.py             # Constants
+├── device_tracker.py    # Device tracker platform
+├── manifest.json        # Integration metadata
+├── sensor.py            # Sensor platform
+├── strings.json         # UI strings
+├── utils.py             # Battery conversion, auth-error detection
 └── translations/
-    └── en.json         # English translations
+    └── en.json          # English translations
 ```
 
 ## Support

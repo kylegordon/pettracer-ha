@@ -302,7 +302,9 @@ class PetTracerSensor(CoordinatorEntity, SensorEntity):
     entity_description: PetTracerSensorEntityDescription
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, device, description: PetTracerSensorEntityDescription):
+    def __init__(
+        self, coordinator, device, description: PetTracerSensorEntityDescription
+    ):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self.entity_description = description
@@ -335,6 +337,11 @@ class PetTracerSensor(CoordinatorEntity, SensorEntity):
         return None
 
     @property
+    def available(self) -> bool:
+        """Available only while polling succeeds and the collar is still listed."""
+        return super().available and self._get_device_data() is not None
+
+    @property
     def native_value(self):
         """Return the state of the sensor."""
         device = self._get_device_data()
@@ -347,4 +354,3 @@ class PetTracerSensor(CoordinatorEntity, SensorEntity):
             device = self._get_device_data()
             return self.entity_description.extra_attrs_fn(device)
         return {}
-

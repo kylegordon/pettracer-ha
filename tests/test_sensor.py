@@ -553,3 +553,18 @@ async def test_charge_state_through_real_setup(
     await hass.data[DOMAIN][entry.entry_id].async_refresh()
     await hass.async_block_till_done()
     assert hass.states.get(entity_id).state == "charged"
+
+
+@pytest.mark.parametrize("key", ["battery_level", "last_contact", "charge_state"])
+async def test_sensor_availability(hass, mock_device, real_coordinator, key):
+    """Sensors are unavailable while polling fails or once the collar is removed."""
+    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == key)
+    coordinator = real_coordinator([mock_device])
+    sensor = PetTracerSensor(coordinator, mock_device, description)
+    assert sensor.available is True
+
+    coordinator.last_update_success = False
+    assert sensor.available is False
+
+    coordinator.async_set_updated_data({"devices": []})
+    assert sensor.available is False

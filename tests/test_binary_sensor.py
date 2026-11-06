@@ -183,3 +183,19 @@ async def test_charging_binary_sensor_device_info(hass, mock_device):
     assert device_info["name"] == "Fluffy"
     assert device_info["manufacturer"] == "PetTracer"
     assert device_info["model"] == "GPS Collar"
+
+
+async def test_binary_sensor_availability(hass, mock_device, real_coordinator):
+    """Binary sensors are unavailable while polling fails or once the collar is removed."""
+    coordinator = real_coordinator([mock_device])
+    sensors = [
+        PetTracerAtHomeBinarySensor(coordinator, mock_device),
+        PetTracerChargingBinarySensor(coordinator, mock_device),
+    ]
+    assert all(s.available for s in sensors)
+
+    coordinator.last_update_success = False
+    assert not any(s.available for s in sensors)
+
+    coordinator.async_set_updated_data({"devices": []})
+    assert not any(s.available for s in sensors)
