@@ -9,7 +9,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from pettracer import PetTracerClient, PetTracerError
 
@@ -30,8 +29,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     username = entry.data[CONF_USERNAME]
     password = entry.data[CONF_PASSWORD]
 
-    # Use HA's shared aiohttp session so nothing is left open on unload/reload
-    client = PetTracerClient(session=async_get_clientsession(hass))
+    # Own session: pettracer-client 0.3.3 login sends a wrong Content-Length with HA's orjson session; revert once fixed upstream
+    client = PetTracerClient()
+    entry.async_on_unload(client.close)
 
     # Authenticate
     try:
