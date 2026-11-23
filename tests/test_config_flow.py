@@ -397,10 +397,8 @@ async def test_reauth_flow_timeout_cannot_connect(hass, mock_setup_entry):
     assert result2["errors"] == {"base": "cannot_connect"}
 
 
-async def test_form_uses_shared_session(hass, mock_setup_entry):
-    """Credential checks reuse HA's shared aiohttp session."""
-    from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
+async def test_form_uses_own_session(hass, mock_setup_entry):
+    """Credential checks use the client's own session and close it."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -408,10 +406,13 @@ async def test_form_uses_shared_session(hass, mock_setup_entry):
     with patch(
         "custom_components.pettracer.config_flow.PetTracerClient"
     ) as mock_client:
-        mock_client.return_value = create_autospec(PetTracerClient, instance=True)
+        client_instance = create_autospec(PetTracerClient, instance=True)
+        mock_client.return_value = client_instance
         await hass.config_entries.flow.async_configure(
             result["flow_id"],
             {CONF_USERNAME: "test@example.com", CONF_PASSWORD: "test_password"},
         )
 
-    mock_client.assert_called_once_with(session=async_get_clientsession(hass))
+    mock_client.assert_called_once_with()
+    client_instance.login.assert_awaited_once()
+    client_instance.__aexit__.assert_awaited_once()
